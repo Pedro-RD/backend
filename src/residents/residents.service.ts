@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CreateResidentDto } from './dto/create-resident.dto';
-import { UpdateResidentDto } from './dto/update-resident.dto';
+import { CreateResidentDto } from "./dto/create-resident.dto";
+import { UpdateResidentDto } from "./dto/update-resident.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Resident } from "./entities/resident.entity";
 import { Repository } from "typeorm";
@@ -12,8 +12,10 @@ export class ResidentsService {
     @InjectRepository(Resident)
     private readonly residentsRepository: Repository<Resident>,
     @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {  }
+    private readonly usersRepository: Repository<User>
+  ) {
+  }
+
   async create(createResidentDto: CreateResidentDto) {
     let relatives = [];
 
@@ -31,14 +33,14 @@ export class ResidentsService {
 
   async findAll() {
     return this.residentsRepository.find({
-      relations: ['relatives'],
+      relations: ["relatives"]
     });
   }
 
   async findOne(id: number) {
     const resident = await this.residentsRepository.findOne({
       where: { id: +id },
-      relations: ['relatives'],
+      relations: ["relatives"]
     });
 
     if (!resident) {
@@ -57,7 +59,7 @@ export class ResidentsService {
     const resident = await this.residentsRepository.preload({
       id: +id,
       ...updateResidentDto,
-      relatives,
+      relatives
     });
     if (!resident) {
       throw new NotFoundException(`Resident not found`);
@@ -85,14 +87,14 @@ export class ResidentsService {
   }
 
   async remove(id: number): Promise<string> {
-    await this.getResidentOrFail(id)
+    await this.getResidentOrFail(id);
     await this.residentsRepository.softDelete(id);
-    return 'success';
+    return "success";
   }
 
   private async getResidentOrFail(id: number): Promise<Resident> {
     const resident = await this.residentsRepository.findOne({ where: { id } });
-    if (!resident) throw new NotFoundException('Resident not found');
+    if (!resident) throw new NotFoundException("Resident not found");
     return resident;
   }
 }
