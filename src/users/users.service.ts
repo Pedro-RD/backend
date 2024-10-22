@@ -13,7 +13,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import QueryParams from '../interfaces/query-params.interface';
-import PagedResponse from '../interfaces/paged-response.interface'; 
+import PagedResponse from '../interfaces/paged-response.interface';
 
 @Injectable()
 export class UsersService {
@@ -38,12 +38,27 @@ export class UsersService {
     return plainToClass(User, user);
   }
 
-  async findAll({ page, limit, orderBy, order }: QueryParams): Promise<PagedResponse<User>> {
-    const [users, totalCount] = await this.usersRepository.findAndCount({
-      order: { [orderBy]: order },
-      take: limit,
-      skip: (page - 1) * limit
-    });
+  async findAll({ page, limit, orderBy, order, search }: QueryParams): Promise<PagedResponse<User>> {
+
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+
+    // search in all fields if present
+    if (search) {
+      queryBuilder.where('user.email ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.name ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.phoneNumber ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.address ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.postcode ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.city ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.fiscalId ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.nationality ILIKE :search', { search: `%${search}%` });
+    }
+
+    const [users, totalCount] = await queryBuilder
+      .orderBy(`user.${orderBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       data: users.map((user) => plainToClass(User, user)),

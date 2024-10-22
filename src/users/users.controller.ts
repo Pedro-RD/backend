@@ -33,12 +33,14 @@ export class UsersController {
     @Query('limit') limit?: number,
     @Query('orderBy') orderBy?: string,
     @Query('order') order?: 'ASC' | 'DESC',
+    @Query('search') search?: string,
   ) {
     return this.usersService.findAll({
       page: page || 1,
       limit: limit || 10,
       orderBy: orderBy || 'id',
       order: order || 'ASC',
+      search: search || '',
     });
   }
 

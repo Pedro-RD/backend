@@ -3,5 +3,5 @@ export default interface QueryParams {
     limit: number;
     orderBy: string;
     order: 'ASC' | 'DESC';
-
+    search: string;
 }
