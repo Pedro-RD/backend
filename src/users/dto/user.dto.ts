@@ -6,6 +6,8 @@ import {
   MaxLength,
   Matches,
   IsOptional,
+  IsInt,
+  IsArray,
 } from 'class-validator';
 
 import { Role } from '../../auth/enums/roles.enum';
@@ -54,4 +56,9 @@ export class UserDto {
   @IsNotEmpty()
   @IsEnum(Role)
   role: Role;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  residents: number[];
 }

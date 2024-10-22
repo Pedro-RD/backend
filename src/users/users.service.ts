@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { plainToClass } from 'class-transformer';
 
@@ -12,6 +12,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
+import { Resident } from '../residents/entities/resident.entity';
 import QueryParams from '../interfaces/query-params.interface';
 import PagedResponse from '../interfaces/paged-response.interface';
 
@@ -21,9 +22,13 @@ export class UsersService {
 
   @InjectRepository(User)
   private usersRepository: Repository<User>;
+  @InjectRepository(Resident)
+  private readonly residentsRepository: Repository<Resident>;
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     await this.checkIfEmailExists(createUserDto.email);
+
+    let residents = []; // array de residents vazio
 
     if (!createUserDto.password)
       throw new BadRequestException('Password is required');
@@ -33,25 +38,53 @@ export class UsersService {
       this.saltRounds,
     );
 
-    const user = this.usersRepository.create(createUserDto);
+    // se o request tiver os residents busca-os
+    if (createUserDto.residents)
+      residents = await this.residentsRepository.find({
+        where: { id: In(createUserDto.residents) }
+      });
+
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      residents,
+    });
     await this.usersRepository.save(user);
     return plainToClass(User, user);
   }
 
-  async findAll({ page, limit, orderBy, order, search }: QueryParams): Promise<PagedResponse<User>> {
-
+  async findAll({
+    page,
+    limit,
+    orderBy,
+    order,
+    search,
+  }: QueryParams): Promise<PagedResponse<User>> {
     const queryBuilder = this.usersRepository.createQueryBuilder('user');
-
+    queryBuilder.leftJoinAndSelect('user.residents', 'resident');
     // search in all fields if present
     if (search) {
       queryBuilder.where('user.email ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.name ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.phoneNumber ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.address ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.postcode ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.city ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.fiscalId ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.nationality ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('user.phoneNumber ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('user.address ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('user.postcode ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('user.city ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('user.fiscalId ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('user.nationality ILIKE :search', {
+        search: `%${search}%`,
+      });
     }
 
     const [users, totalCount] = await queryBuilder
@@ -87,9 +120,14 @@ export class UsersService {
       );
     }
 
+    const residents = await this.residentsRepository.findByIds(
+      updateUserDto.residents,
+    );
+
     const updatedUser = await this.usersRepository.save({
       ...user,
       ...updateUserDto,
+      residents,
     });
 
     return plainToClass(User, updatedUser);
@@ -112,7 +150,10 @@ export class UsersService {
   }
 
   private async getUserOrFail(id: number): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['residents'],
+    });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }

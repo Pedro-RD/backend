@@ -4,7 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
-import * as process from 'node:process';
+import { ResidentsModule } from './residents/residents.module';
+  import { Resident } from "./residents/entities/resident.entity";
 
 @Module({
   imports: [
@@ -14,11 +15,12 @@ import * as process from 'node:process';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User],
+      entities: [User, Resident],
       synchronize: true,
     }),
     AuthModule,
     UsersModule,
+    ResidentsModule,
   ],
 })
 export class AppModule {}
