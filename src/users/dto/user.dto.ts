@@ -5,11 +5,12 @@ import {
   IsString,
   MaxLength,
   Matches,
-  IsOptional, IsInt, IsArray
-} from "class-validator";
+  IsOptional,
+  IsInt,
+  IsArray,
+} from 'class-validator';
 
 import { Role } from '../../auth/enums/roles.enum';
-import { Transform } from 'class-transformer';
 
 export class UserDto {
   // Login details
@@ -23,7 +24,7 @@ export class UserDto {
   @MaxLength(50)
   name: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   @Matches(/^\+?[1-9]\d{1,14}$/)
   phoneNumber: string;

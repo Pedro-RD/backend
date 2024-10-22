@@ -2,14 +2,15 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
-  Entity, JoinTable,
+  Entity,
+  JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from "typeorm";
-import { CivilStatus } from "../enums/civilStatus.enum";
-import { User } from "../../users/entities/user.entity";
-import { Diet } from "../enums/diet.enum";
+  UpdateDateColumn,
+} from 'typeorm';
+import { CivilStatus } from '../enums/civilStatus.enum';
+import { User } from '../../users/entities/user.entity';
+import { Diet } from '../enums/diet.enum';
 
 @Entity()
 export class Resident {
@@ -25,8 +26,8 @@ export class Resident {
   @Column()
   birthDate: Date;
 
-  @Column()
-  specificCare: string;
+  @Column({ nullable: true })
+  specificCare: string | null;
 
   @Column({
     type: 'enum',
@@ -43,19 +44,17 @@ export class Resident {
   })
   diet: Diet;
 
-  @Column()
-  dietRestrictions: string;
+  @Column({ nullable: true })
+  dietRestrictions: string | null;
 
-  @Column()
-  allergies: string;
+  @Column({ nullable: true })
+  allergies: string | null;
 
   @Column()
   bedNumber: number;
 
-  @ManyToMany(
-    () => User, (relative) => relative.residents
-  )
-  @JoinTable({name:"resident_user"})
+  @ManyToMany(() => User, (relative) => relative.residents)
+  @JoinTable({ name: 'resident_user' })
   relatives: User[];
 
   // Timestamps

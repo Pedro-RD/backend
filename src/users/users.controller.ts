@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   Put,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -27,8 +28,20 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('orderBy') orderBy?: string,
+    @Query('order') order?: 'ASC' | 'DESC',
+    @Query('search') search?: string,
+  ) {
+    return this.usersService.findAll({
+      page: page || 1,
+      limit: limit || 10,
+      orderBy: orderBy || 'id',
+      order: order || 'ASC',
+      search: search || '',
+    });
   }
 
   @Get(':id')
