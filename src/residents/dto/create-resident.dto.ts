@@ -1,22 +1,17 @@
-import { Column, PrimaryGeneratedColumn } from "typeorm";
 import {
   IsArray,
-  isArray,
-  IsDate,
-  IsDateString,
   IsEnum,
-  IsIn, IsInt,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString
-} from "class-validator";
-import { Transform } from "class-transformer";
-import { CivilStatus } from "../enums/civilStatus.enum";
-import { Diet } from "../enums/diet.enum";
+  IsString,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
+import { CivilStatus } from '../enums/civilStatus.enum';
+import { Diet } from '../enums/diet.enum';
 
 export class CreateResidentDto {
-
   @IsString()
   @IsNotEmpty()
   name: string;
