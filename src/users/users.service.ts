@@ -11,6 +11,7 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { plainToClass } from 'class-transformer';
+import { Resident } from "../residents/entities/resident.entity";
 
 @Injectable()
 export class UsersService {
@@ -18,9 +19,13 @@ export class UsersService {
 
   @InjectRepository(User)
   private usersRepository: Repository<User>;
+  @InjectRepository(Resident)
+  private readonly residentsRepository: Repository<Resident>;
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     await this.checkIfEmailExists(createUserDto.email);
+
+    let residents = []; // array de residents vazio
 
     if (!createUserDto.password)
       throw new BadRequestException('Password is required');
@@ -30,13 +35,22 @@ export class UsersService {
       this.saltRounds,
     );
 
-    const user = this.usersRepository.create(createUserDto);
+    // se o request tiver os residents busca-os
+    if (createUserDto.residents)
+      residents = await this.residentsRepository.findByIds(createUserDto.residents);
+
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      residents,
+    });
     await this.usersRepository.save(user);
     return plainToClass(User, user);
   }
 
   async findAll(): Promise<User[]> {
-    const users = await this.usersRepository.find();
+    const users = await this.usersRepository.find({
+      relations: ['residents']
+    });
     return users.map((user) => plainToClass(User, user));
   }
 
@@ -58,9 +72,12 @@ export class UsersService {
       );
     }
 
+    const residents = await this.residentsRepository.findByIds(updateUserDto.residents);
+
     const updatedUser = await this.usersRepository.save({
       ...user,
       ...updateUserDto,
+      residents,
     });
 
     return plainToClass(User, updatedUser);
@@ -83,7 +100,10 @@ export class UsersService {
   }
 
   private async getUserOrFail(id: number): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['residents'],
+    });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
