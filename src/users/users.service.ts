@@ -4,13 +4,16 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { plainToClass } from 'class-transformer';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { plainToClass } from 'class-transformer';
+import QueryParams from '../interfaces/query-params.interface';
+import PagedResponse from '../interfaces/paged-response.interface';
 
 @Injectable()
 export class UsersService {
@@ -35,9 +38,35 @@ export class UsersService {
     return plainToClass(User, user);
   }
 
-  async findAll(): Promise<User[]> {
-    const users = await this.usersRepository.find();
-    return users.map((user) => plainToClass(User, user));
+  async findAll({ page, limit, orderBy, order, search }: QueryParams): Promise<PagedResponse<User>> {
+
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+
+    // search in all fields if present
+    if (search) {
+      queryBuilder.where('user.email ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.name ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.phoneNumber ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.address ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.postcode ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.city ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.fiscalId ILIKE :search', { search: `%${search}%` });
+      queryBuilder.orWhere('user.nationality ILIKE :search', { search: `%${search}%` });
+    }
+
+    const [users, totalCount] = await queryBuilder
+      .orderBy(`user.${orderBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: users.map((user) => plainToClass(User, user)),
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    };
   }
 
   async findOne(id: number): Promise<User> {
