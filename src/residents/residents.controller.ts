@@ -5,8 +5,8 @@ import {
   Get,
   Param,
   Patch,
-  Post,
-} from '@nestjs/common';
+  Post, Query
+} from "@nestjs/common";
 
 import { ResidentsService } from './residents.service';
 import { CreateResidentDto } from './dto/create-resident.dto';
@@ -22,8 +22,20 @@ export class ResidentsController {
   }
 
   @Get()
-  findAll() {
-    return this.residentsService.findAll();
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('orderBy') orderBy?: string,
+    @Query('order') order?: 'ASC' | 'DESC',
+    @Query('search') search?: string,
+  ) {
+    return this.residentsService.findAll({
+      page: page || 1,
+      limit: limit || 10,
+      orderBy: orderBy || 'id',
+      order: order || 'ASC',
+      search: search || '',
+    });
   }
 
   @Get(':id')
