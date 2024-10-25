@@ -4,7 +4,7 @@ import {
   DeleteDateColumn,
   Entity,
   JoinTable,
-  ManyToMany, OneToOne,
+  ManyToMany, OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
@@ -58,8 +58,8 @@ export class Resident {
   @JoinTable({ name: 'resident_user' })
   relatives: User[];
 
-  @OneToOne(() => HealthReport, (healthReport) => healthReport.resident)
-  healthReport: HealthReport;
+  @OneToMany(() => HealthReport, (healthReport) => healthReport.resident)
+  healthReports: HealthReport[];
 
   // Timestamps
   @CreateDateColumn()

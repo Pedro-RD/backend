@@ -2,8 +2,7 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
-  Entity, JoinColumn,
-  OneToOne,
+  Entity, JoinColumn, ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
@@ -48,7 +47,7 @@ export class HealthReport {
   @Column("decimal", { nullable: true, precision: 5, scale: 2 })
   bloodOxygenLevel: number; // Taxa de Oxigênio no Sangue
 
-  @OneToOne(() => Resident, (resident) => resident.healthReport)
+  @ManyToOne(() => Resident, (resident) => resident.healthReports)
   @JoinColumn()
   resident: Resident;
 
