@@ -10,6 +10,8 @@ import { HealthReportModule } from './health-report/health-report.module';
 import { HealthReport } from "./health-report/entities/health-report.entity";
 import { Medicament } from "./medicaments/entities/medicament.entity";
 import { MedicamentsModule } from "./medicaments/medicaments.module";
+import { MedicamentAdministrationModule } from './medicament-administration/medicament-administration.module';
+import { MedicamentAdministration } from "./medicament-administration/entities/medicament-administration.entity";
 
 @Module({
   imports: [
@@ -19,14 +21,15 @@ import { MedicamentsModule } from "./medicaments/medicaments.module";
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, Resident, HealthReport, Medicament],
+      entities: [User, Resident, HealthReport, Medicament, MedicamentAdministration],
       synchronize: true,
     }),
     AuthModule,
     UsersModule,
     ResidentsModule,
     HealthReportModule,
-    MedicamentsModule
+    MedicamentsModule,
+    MedicamentAdministrationModule,
   ],
 })
 export class AppModule {}
