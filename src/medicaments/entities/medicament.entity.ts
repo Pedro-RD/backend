@@ -3,11 +3,12 @@ import {
   CreateDateColumn, DeleteDateColumn,
   Entity,
   JoinTable,
-  ManyToOne,
+  ManyToOne, OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resident } from "../../residents/entities/resident.entity";
+import { MedicamentAdministration } from "../../medicament-administration/entities/medicament-administration.entity";
 
 @Entity()
 export class Medicament {
@@ -32,6 +33,9 @@ export class Medicament {
   @ManyToOne(() => Resident, (resident) => resident.medicaments)
   @JoinTable()
   resident: Resident;
+
+  @OneToOne(() => MedicamentAdministration, (medicamentAdministration) => medicamentAdministration.medicament)
+  medicamentAdministration: MedicamentAdministration;
 
   // Timestamps
   @CreateDateColumn()
