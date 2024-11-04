@@ -11,11 +11,12 @@ import {
   HttpCode,
   HttpStatus,
   Put,
-  Query,
-} from '@nestjs/common';
+  Query, BadRequestException
+} from "@nestjs/common";
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryParamsUsersDto } from "../query/query-params-users.dto";
 
 @Controller('users')
 export class UsersController {
@@ -28,20 +29,22 @@ export class UsersController {
   }
 
   @Get()
-  findAll(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('orderBy') orderBy?: string,
-    @Query('order') order?: 'ASC' | 'DESC',
-    @Query('search') search?: string,
-  ) {
-    return this.usersService.findAll({
-      page: page || 1,
-      limit: limit || 10,
-      orderBy: orderBy || 'id',
-      order: order || 'ASC',
-      search: search || '',
-    });
+  @UsePipes(new ValidationPipe({
+    transform: true,
+    whitelist: true,
+  }))
+  findAll(@Query() query: QueryParamsUsersDto) {
+    try {
+      return this.usersService.findAll({
+        page: query.page || 1,
+        limit: query.limit || 10,
+        orderBy: query.orderBy || 'id',
+        order: query.order || 'ASC',
+        search: query.search || '',
+      });
+    } catch (error) {
+      throw new BadRequestException('Invalid query parameters');
+    }
   }
 
   @Get(':id')

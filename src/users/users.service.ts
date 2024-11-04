@@ -62,30 +62,35 @@ export class UsersService {
     const queryBuilder = this.usersRepository.createQueryBuilder('user');
     queryBuilder.leftJoinAndSelect('user.residents', 'resident');
     // search in all fields if present
-    if (search) {
-      queryBuilder.where('user.email ILIKE :search', { search: `%${search}%` });
-      queryBuilder.orWhere('user.name ILIKE :search', {
-        search: `%${search}%`,
-      });
-      queryBuilder.orWhere('user.phoneNumber ILIKE :search', {
-        search: `%${search}%`,
-      });
-      queryBuilder.orWhere('user.address ILIKE :search', {
-        search: `%${search}%`,
-      });
-      queryBuilder.orWhere('user.postcode ILIKE :search', {
-        search: `%${search}%`,
-      });
-      queryBuilder.orWhere('user.city ILIKE :search', {
-        search: `%${search}%`,
-      });
-      queryBuilder.orWhere('user.fiscalId ILIKE :search', {
-        search: `%${search}%`,
-      });
-      queryBuilder.orWhere('user.nationality ILIKE :search', {
-        search: `%${search}%`,
-      });
+    try {
+      if (search) {
+        queryBuilder.where("user.email ILIKE :search", { search: `%${search}%` });
+        queryBuilder.orWhere("user.name ILIKE :search", {
+          search: `%${search}%`
+        });
+        queryBuilder.orWhere("user.phoneNumber ILIKE :search", {
+          search: `%${search}%`
+        });
+        queryBuilder.orWhere("user.address ILIKE :search", {
+          search: `%${search}%`
+        });
+        queryBuilder.orWhere("user.postcode ILIKE :search", {
+          search: `%${search}%`
+        });
+        queryBuilder.orWhere("user.city ILIKE :search", {
+          search: `%${search}%`
+        });
+        queryBuilder.orWhere("user.fiscalId ILIKE :search", {
+          search: `%${search}%`
+        });
+        queryBuilder.orWhere("user.nationality ILIKE :search", {
+          search: `%${search}%`
+        });
+      }
+    } catch (error) {
+      throw new BadRequestException(error);
     }
+
 
     const [users, totalCount] = await queryBuilder
       .orderBy(`user.${orderBy}`, order)

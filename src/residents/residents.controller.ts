@@ -1,16 +1,19 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   Param,
   Patch,
-  Post, Query
+  Post, Query, UsePipes, ValidationPipe
 } from "@nestjs/common";
 
 import { ResidentsService } from './residents.service';
 import { CreateResidentDto } from './dto/create-resident.dto';
 import { UpdateResidentDto } from './dto/update-resident.dto';
+import { QueryParamsResidentsDto } from "../query/query-params-residents.dto";
+
 
 @Controller('residents')
 export class ResidentsController {
@@ -22,20 +25,22 @@ export class ResidentsController {
   }
 
   @Get()
-  findAll(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('orderBy') orderBy?: string,
-    @Query('order') order?: 'ASC' | 'DESC',
-    @Query('search') search?: string,
-  ) {
-    return this.residentsService.findAll({
-      page: page || 1,
-      limit: limit || 10,
-      orderBy: orderBy || 'id',
-      order: order || 'ASC',
-      search: search || '',
-    });
+  @UsePipes(new ValidationPipe({
+    transform: true,
+    whitelist: true
+  }))
+  findAll(@Query() query: QueryParamsResidentsDto) {
+    try {
+      return this.residentsService.findAll({
+        page: query.page || 1,
+        limit: query.limit || 10,
+        orderBy: query.orderBy || 'id',
+        order: query.order || 'ASC',
+        search: query.search || '',
+      });
+    } catch (error) {
+      throw new BadRequestException('Invalid query parameters');
+    }
   }
 
   @Get(':id')
