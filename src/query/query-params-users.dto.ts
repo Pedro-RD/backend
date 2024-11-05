@@ -4,6 +4,8 @@ import { QueryParamsDto } from "./query-params.dto";
 export class QueryParamsUsersDto extends QueryParamsDto{
   @IsOptional()
   @IsString()
-  @Matches(/^(id|name|phoneNumber|address|postcode|city|fiscalId|nationality)$/)
+  @Matches(
+    /^(id|email|name|phoneNumber|address|postcode|city|fiscalId|nationality)$/,
+  )
   orderBy?: string;
 }
