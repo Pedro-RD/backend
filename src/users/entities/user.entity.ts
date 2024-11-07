@@ -3,14 +3,15 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  ManyToMany,
+  ManyToMany, OneToOne,
   PrimaryGeneratedColumn,
   Unique,
-  UpdateDateColumn,
-} from 'typeorm';
+  UpdateDateColumn
+} from "typeorm";
 import { Role } from '../../auth/enums/roles.enum';
 import { Exclude } from 'class-transformer';
 import { Resident } from '../../residents/entities/resident.entity';
+import { Employee } from "../../employee/entities/employee.entity";
 
 @Entity()
 @Unique(['email'])
@@ -54,6 +55,9 @@ export class User {
 
   @ManyToMany(() => Resident, (resident) => resident.relatives)
   residents: Resident[];
+
+  @OneToOne(() => Employee, (employee) => employee.user)
+  employee: Employee;
 
   // Timestamps
   @CreateDateColumn()
