@@ -5,6 +5,10 @@ import { Resident } from "../residents/entities/resident.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Medicament } from "./entities/medicament.entity";
+import QueryParams from "../interfaces/query-params.interface";
+import PagedResponse from "../interfaces/paged-response.interface";
+import { plainToClass } from "class-transformer";
+import { QueryParamsMedicamentsDto } from "../query/query-params-medicaments.dto";
 
 @Injectable()
 export class MedicamentsService {
@@ -33,10 +37,46 @@ export class MedicamentsService {
   }
 
 
-  async findAll() {
-    return await this.medicamentsRepository.find({
-      relations: ['resident'],
-    });
+  async findAll({
+    page,
+    limit,
+    orderBy,
+    order,
+    search,
+    residentId,
+  }: QueryParamsMedicamentsDto): Promise<PagedResponse<Medicament>> {
+    const queryBuilder = this.medicamentsRepository.createQueryBuilder('medicament');
+    queryBuilder.leftJoinAndSelect('medicament.resident', 'resident');
+
+    // search in all fields if present
+    if (search) {
+      queryBuilder.where('medicament.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('medicament.instructions ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (residentId) {
+      queryBuilder.where('medicament.resident.id = :residentId', {
+        residentId: residentId,
+      });
+    }
+
+    const [medicaments, totalCount] = await queryBuilder
+      .orderBy(`medicament.${orderBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: medicaments.map((medicament) => plainToClass(Medicament, medicament)),
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    };
   }
 
   async findOne(id: number) {
