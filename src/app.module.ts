@@ -12,6 +12,8 @@ import { Medicament } from "./medicaments/entities/medicament.entity";
 import { MedicamentsModule } from "./medicaments/medicaments.module";
 import { MedicamentAdministrationModule } from './medicament-administration/medicament-administration.module';
 import { MedicamentAdministration } from "./medicament-administration/entities/medicament-administration.entity";
+import { EmployeeModule } from './employee/employee.module';
+import { Employee } from "./employee/entities/employee.entity";
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { MedicamentAdministration } from "./medicament-administration/entities/m
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, Resident, HealthReport, Medicament, MedicamentAdministration],
+      entities: [User, Resident, HealthReport, Medicament, MedicamentAdministration, Employee],
       synchronize: true,
     }),
     AuthModule,
@@ -30,6 +32,7 @@ import { MedicamentAdministration } from "./medicament-administration/entities/m
     HealthReportModule,
     MedicamentsModule,
     MedicamentAdministrationModule,
+    EmployeeModule,
   ],
 })
 export class AppModule {}
