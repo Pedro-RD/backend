@@ -115,10 +115,9 @@ export class ResidentsService {
     return this.residentsRepository.save(resident);
   }
 
-  async remove(id: number): Promise<string> {
+  async remove(id: number): Promise<void> {
     await this.getResidentOrFail(id);
     await this.residentsRepository.softDelete(id);
-    return 'success';
   }
 
   private async getResidentOrFail(id: number): Promise<Resident> {
