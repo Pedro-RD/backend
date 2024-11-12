@@ -114,20 +114,21 @@ export class UsersService {
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.getUserOrFail(id);
-
     if (updateUserDto.email !== user.email)
       await this.checkIfEmailExists(updateUserDto.email);
-
+    
     if (updateUserDto.password) {
       updateUserDto.password = bcrypt.hashSync(
         updateUserDto.password,
         this.saltRounds,
       );
     }
-
-    const residents = await this.residentsRepository.findByIds(
-      updateUserDto.residents,
-    );
+    
+    const residents = 
+      updateUserDto.residents && updateUserDto.residents.length > 0 ?
+      await this.residentsRepository.find({
+        where: { id: In(updateUserDto.residents) }
+      }) : user.residents;
 
     const updatedUser = await this.usersRepository.save({
       ...user,
