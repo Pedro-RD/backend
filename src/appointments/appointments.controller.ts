@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  HttpCode,
+} from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
@@ -8,27 +18,45 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post()
-  create(@Body() createAppointmentDto: CreateAppointmentDto) {
-    return this.appointmentsService.create(createAppointmentDto);
+  create(
+    @Param('residentId', ParseIntPipe) residentId: number,
+    @Body() createAppointmentDto: CreateAppointmentDto,
+  ) {
+    return this.appointmentsService.create(residentId, createAppointmentDto);
   }
 
   @Get()
-  findAll() {
-    return this.appointmentsService.findAll();
+  findAll(@Param('residentId', ParseIntPipe) residentId: number) {
+    return this.appointmentsService.findAll(residentId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.appointmentsService.findOne(+id);
+  findOne(
+    @Param('residentId', ParseIntPipe) residentId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.appointmentsService.findOne(id, residentId);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto) {
-    return this.appointmentsService.update(+id, updateAppointmentDto);
+  update(
+    @Param('residentId', ParseIntPipe) residentId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAppointmentDto: UpdateAppointmentDto,
+  ) {
+    return this.appointmentsService.update(
+      id,
+      residentId,
+      updateAppointmentDto,
+    );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.appointmentsService.remove(+id);
+  @HttpCode(204)
+  async remove(
+    @Param('residentId', ParseIntPipe) residentId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.appointmentsService.remove(id, residentId);
   }
 }

@@ -1,5 +1,6 @@
-import { IsDateString, IsString, IsEnum, IsInt, IsNotEmpty, MinLength } from 'class-validator';
+import { IsDateString, IsString, IsEnum, IsInt, IsNotEmpty, MinLength, IsOptional, Validate } from 'class-validator';
 import { AppointmentType, AppointmentStatus } from '../entities/appointment.entity';
+import { IsFutureDate } from '../validators/is-future-date.validator';
 
 export class CreateAppointmentDto {
   @IsString()
@@ -9,9 +10,11 @@ export class CreateAppointmentDto {
 
   @IsDateString()
   @IsNotEmpty()
+  @Validate(IsFutureDate)
   start: Date;
 
   @IsString()
+  @IsOptional()
   observation: string;
 
   @IsEnum(AppointmentType)
@@ -21,8 +24,4 @@ export class CreateAppointmentDto {
   @IsEnum(AppointmentStatus)
   @IsNotEmpty()
   status: AppointmentStatus;
-
-  @IsInt()
-  @IsNotEmpty()
-  residentId: number;
 }
