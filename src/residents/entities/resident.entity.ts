@@ -13,6 +13,7 @@ import { User } from '../../users/entities/user.entity';
 import { Diet } from '../enums/diet.enum';
 import { HealthReport } from "../../health-report/entities/health-report.entity";
 import { Medicament } from "../../medicaments/entities/medicament.entity";
+import { Appointment } from '../../appointments/entities/appointment.entity';
 
 @Entity()
 export class Resident {
@@ -64,6 +65,9 @@ export class Resident {
 
   @OneToMany(() => Medicament, (medicament) => medicament.resident)
   medicaments: Medicament[];
+
+  @OneToMany(() => Appointment, (appointment) => appointment.resident)
+  appointments: Appointment[];
 
   // Timestamps
   @CreateDateColumn()
