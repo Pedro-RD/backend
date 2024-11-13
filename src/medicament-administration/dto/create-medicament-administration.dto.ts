@@ -9,7 +9,7 @@ export class CreateMedicamentAdministrationDto {
   @IsNumber()
   dose: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  medicament: number;
+  //@IsNumber()
+  //@IsNotEmpty()
+  //medicament: number;
 }

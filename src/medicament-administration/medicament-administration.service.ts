@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { CreateMedicamentAdministrationDto } from './dto/create-medicament-administration.dto';
 import { UpdateMedicamentAdministrationDto } from './dto/update-medicament-administration.dto';
 import { HealthReport } from "../health-report/entities/health-report.entity";
@@ -6,6 +6,10 @@ import { MedicamentAdministration } from "./entities/medicament-administration.e
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Medicament } from "../medicaments/entities/medicament.entity";
+import { QueryParamsMedicamentsDto } from "../query/query-params-medicaments.dto";
+import PagedResponse from "../interfaces/paged-response.interface";
+import { plainToClass } from "class-transformer";
+import { QueryParamsMedicamentAdministrationDto } from "../query/query-params-medicament-administration.dto";
 
 @Injectable()
 export class MedicamentAdministrationService {
@@ -16,38 +20,90 @@ export class MedicamentAdministrationService {
     private readonly medicamentsRepository: Repository<Medicament>,
   ) {
   }
-  async create(createMedicamentAdministrationDto: CreateMedicamentAdministrationDto) {
+  async create(
+    medicamentId: number,
+    createMedicamentAdministrationDto: CreateMedicamentAdministrationDto
+  ) {
+    const medicament = await this.medicamentsRepository.findOne({
+      where: { id: medicamentId },
+    });
+
+    if (!medicament) {
+      throw new NotFoundException(`Medicament not found`);
+    }
+
+    try {
+      const medicamentAdministration = this.medicamentAdministrationRepository.create({
+        ...createMedicamentAdministrationDto,
+        medicament,
+      });
+
+      return await this.medicamentAdministrationRepository.save(medicamentAdministration);
+    } catch (e) {
+      throw new BadRequestException('An error occurred while creating the medicament administration.');
+    }
+  }
+
+  async findAll({
+    page,
+    limit,
+    orderBy,
+    order,
+    search,
+    medicamentId,
+  }: QueryParamsMedicamentAdministrationDto): Promise<PagedResponse<MedicamentAdministration>> {
+    const queryBuilder = this.medicamentAdministrationRepository.createQueryBuilder('medicamentAdministration');
+    queryBuilder.leftJoinAndSelect('medicamentAdministration.medicament', 'medicament');
+
+    // search in all fields if present
+    if (search) {
+      queryBuilder.where('medicamentAdministration.hour ILIKE :search', {
+        search: `%${search}%`,
+      });
+      queryBuilder.orWhere('medicamentAdministration.dose ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (medicamentId) {
+      queryBuilder.where('medicamentAdministration.medicament.id = :medicamentId', {
+        medicamentId: medicamentId,
+      });
+    }
+
+    const [medicamentAdministrations, totalCount] = await queryBuilder
+      .orderBy(`medicamentAdministration.${orderBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: medicamentAdministrations.map((medicamentAdministration) => plainToClass(MedicamentAdministration, medicamentAdministration)),
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+  }
+
+  async findOne(medicamentId: number, id: number) {
+    return await this.getMedicamentAdministration(medicamentId, id);
+  }
+
+  async update(medicamentId: number, id: number, updateMedicamentAdministrationDto: UpdateMedicamentAdministrationDto) {
     let medicament = await this.medicamentsRepository.findOne({
-      where: { id: createMedicamentAdministrationDto.medicament },
+      where: { id: medicamentId },
     });
 
-    const medicamentAdministration = this.medicamentAdministrationRepository.create({
-      ...createMedicamentAdministrationDto,
-      medicament,
-    });
 
-    return await this.medicamentAdministrationRepository.save(medicamentAdministration);
-  }
+    if (!medicament) {
+      throw new NotFoundException(`Medicament not found`);
+    }
 
-  async findAll() {
-    return await this.medicamentAdministrationRepository.find({
-      relations: ['medicament'],
-    });
-  }
-
-  async findOne(id: number) {
-    return await this.getMedicamentAdministration(id);
-  }
-
-  async update(id: number, updateMedicamentAdministrationDto: UpdateMedicamentAdministrationDto) {
-    let medicament = await this.medicamentsRepository.findOne({
-      where: { id: updateMedicamentAdministrationDto.medicament },
-    });
 
     const medicamentAdministration = await this.medicamentAdministrationRepository.preload({
       id: +id,
       ...updateMedicamentAdministrationDto,
-      medicament,
     });
 
     if (!medicamentAdministration) {
@@ -57,15 +113,15 @@ export class MedicamentAdministrationService {
     return this.medicamentAdministrationRepository.save(medicamentAdministration);
   }
 
-  async remove(id: number) {
-    await this.getMedicamentAdministration(id);
+  async remove(medicamentId: number, id: number) {
+    await this.getMedicamentAdministration(medicamentId, id);
     await this.medicamentAdministrationRepository.softDelete(id);
     return 'success';
   }
 
-  private async getMedicamentAdministration(id: number): Promise<MedicamentAdministration> {
+  private async getMedicamentAdministration(medicamentId: number, id: number): Promise<MedicamentAdministration> {
     const medicamentAdministration = await this.medicamentAdministrationRepository.findOne({
-      where: { id },
+      where: { id, medicament: { id: medicamentId} },
       relations: ['medicament'],
     });
     if (!medicamentAdministration) throw new NotFoundException('Medicament administration report not found');

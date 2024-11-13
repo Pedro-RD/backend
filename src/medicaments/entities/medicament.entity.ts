@@ -3,7 +3,7 @@ import {
   CreateDateColumn, DeleteDateColumn,
   Entity,
   JoinTable,
-  ManyToOne, OneToOne,
+  ManyToOne, OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
@@ -34,8 +34,8 @@ export class Medicament {
   @JoinTable()
   resident: Resident;
 
-  @OneToOne(() => MedicamentAdministration, (medicamentAdministration) => medicamentAdministration.medicament)
-  medicamentAdministration: MedicamentAdministration;
+  @OneToMany(() => MedicamentAdministration, (medicamentAdministration) => medicamentAdministration.medicament)
+  medicamentAdministrations: MedicamentAdministration[];
 
   // Timestamps
   @CreateDateColumn()
