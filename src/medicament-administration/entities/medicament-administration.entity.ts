@@ -1,8 +1,7 @@
 import {
   Column,
   CreateDateColumn,
-  DeleteDateColumn, Entity, JoinColumn,
-  OneToOne,
+  DeleteDateColumn, Entity, JoinColumn, ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
@@ -19,7 +18,7 @@ export class MedicamentAdministration {
   @Column()
   dose: number;
 
-  @OneToOne(() => Medicament, (medicament) => medicament.medicamentAdministration)
+  @ManyToOne(() => Medicament, (medicament) => medicament.medicamentAdministrations)
   @JoinColumn()
   medicament: Medicament;
 
