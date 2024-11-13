@@ -14,6 +14,7 @@ import { MedicamentAdministrationModule } from './medicament-administration/medi
 import { MedicamentAdministration } from "./medicament-administration/entities/medicament-administration.entity";
 import { EmployeeModule } from './employee/employee.module';
 import { Employee } from "./employee/entities/employee.entity";
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { Employee } from "./employee/entities/employee.entity";
     MedicamentsModule,
     MedicamentAdministrationModule,
     EmployeeModule,
+    AppointmentsModule,
   ],
 })
 export class AppModule {}
