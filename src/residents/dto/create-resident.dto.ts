@@ -8,6 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { BadRequestException } from '@nestjs/common';
 import { CivilStatus } from '../enums/civilStatus.enum';
 import { Diet } from '../enums/diet.enum';
 
@@ -20,7 +21,13 @@ export class CreateResidentDto {
   @IsNotEmpty()
   fiscalId: string;
 
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException(`Invalid date format: ${value}`);
+    }
+    return date;
+  })
   @IsNotEmpty()
   birthDate: Date;
 

@@ -5,7 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { ResidentsModule } from './residents/residents.module';
-  import { Resident } from "./residents/entities/resident.entity";
+import { Resident } from "./residents/entities/resident.entity";
 import { HealthReportModule } from './health-report/health-report.module';
 import { HealthReport } from "./health-report/entities/health-report.entity";
 import { Medicament } from "./medicaments/entities/medicament.entity";
@@ -14,6 +14,8 @@ import { MedicamentAdministrationModule } from './medicament-administration/medi
 import { MedicamentAdministration } from "./medicament-administration/entities/medicament-administration.entity";
 import { EmployeeModule } from './employee/employee.module';
 import { Employee } from "./employee/entities/employee.entity";
+import { AppointmentsModule } from './appointments/appointments.module';
+import { Appointment } from './appointments/entities/appointment.entity';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { Employee } from "./employee/entities/employee.entity";
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, Resident, HealthReport, Medicament, MedicamentAdministration, Employee],
+      entities: [User, Resident, HealthReport, Medicament, MedicamentAdministration, Employee, Appointment],
       synchronize: true,
     }),
     AuthModule,
@@ -33,6 +35,7 @@ import { Employee } from "./employee/entities/employee.entity";
     MedicamentsModule,
     MedicamentAdministrationModule,
     EmployeeModule,
+    AppointmentsModule,
   ],
 })
 export class AppModule {}
