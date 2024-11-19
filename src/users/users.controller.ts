@@ -1,69 +1,53 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  UsePipes,
-  ParseIntPipe,
-  ValidationPipe,
-  HttpCode,
-  HttpStatus,
-  Put,
-  Query, BadRequestException
-} from "@nestjs/common";
-import { UsersService } from './users.service';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ResetPasswordDTO } from './dto/password-reset.dto';
+import { QueryParamsUsersDto } from './dto/query-params-users.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { QueryParamsUsersDto } from "../query/query-params-users.dto";
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+    constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @UsePipes(ValidationPipe)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
-  @Get()
-  @UsePipes(new ValidationPipe({
-    transform: true,
-    whitelist: true,
-  }))
-  findAll(@Query() query: QueryParamsUsersDto) {
-    try {
-      return this.usersService.findAll({
-        page: query.page || 1,
-        limit: query.limit || 10,
-        orderBy: query.orderBy || 'id',
-        order: query.order || 'ASC',
-        search: query.search || '',
-      });
-    } catch (error) {
-      throw new BadRequestException('Invalid query parameters');
+    @Get()
+    findAll(@Query() query: QueryParamsUsersDto) {
+        return this.usersService.findAll({
+            page: query.page || 1,
+            limit: query.limit || 10,
+            orderBy: query.orderBy || 'id',
+            order: query.order || 'ASC',
+            search: query.search || '',
+            role: query.role,
+        });
     }
-  }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(+id);
-  }
+    @Get(':id')
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.usersService.findOne(+id);
+    }
 
-  @Put(':id')
-  @UsePipes(ValidationPipe)
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
-    return this.usersService.update(+id, updateUserDto);
-  }
+    @Post()
+    @UsePipes(ValidationPipe)
+    create(@Body() createUserDto: CreateUserDto) {
+        return this.usersService.create(createUserDto);
+    }
 
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(+id);
-  }
+    @Patch(':id')
+    @UsePipes(ValidationPipe)
+    update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
+        return this.usersService.update(+id, updateUserDto);
+    }
+
+    @Patch(':id/password')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @UsePipes(ValidationPipe)
+    resetPassword(@Param('id', ParseIntPipe) id: number, @Body() resetPasswordDto: ResetPasswordDTO) {
+        return this.usersService.resetPassword(id, resetPasswordDto);
+    }
+
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @Delete(':id')
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.usersService.remove(+id);
+    }
 }
