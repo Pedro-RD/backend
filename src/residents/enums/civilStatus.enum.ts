@@ -1,6 +1,6 @@
 export enum CivilStatus {
-  Single = 'Single',
-  Married = 'Married',
-  Divorced = 'Divorced',
-  Widowed = 'Widowed',
+    Single = 'Solteiro',
+    Married = 'Casado',
+    Divorced = 'Divorciado',
+    Widowed = 'Viúvo',
 }

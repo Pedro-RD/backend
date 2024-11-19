@@ -10,12 +10,6 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
     @Get()
-    @UsePipes(
-        new ValidationPipe({
-            transform: true,
-            whitelist: true,
-        }),
-    )
     findAll(@Query() query: QueryParamsUsersDto) {
         return this.usersService.findAll({
             page: query.page || 1,
