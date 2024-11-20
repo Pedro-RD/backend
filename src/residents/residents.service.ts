@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { In, Repository } from 'typeorm';
@@ -9,6 +10,15 @@ import { User } from '../users/entities/user.entity';
 import { CreateResidentDto } from './dto/create-resident.dto';
 import { UpdateResidentDto } from './dto/update-resident.dto';
 import { Resident } from './entities/resident.entity';
+import Mobility from './enums/mobility.enum';
+
+interface EnvironmentVariables {
+    NUMBER_OF_BEDS: number;
+    MONTHLY_FEE: number;
+    EXTRA_BEDRIDDEN: number;
+    EXTRA_WHEELCHAIR: number;
+    EXTRA_CANE: number;
+}
 
 @Injectable()
 export class ResidentsService {
@@ -19,7 +29,14 @@ export class ResidentsService {
         private readonly residentsRepository: Repository<Resident>,
         @InjectRepository(User)
         private readonly usersRepository: Repository<User>,
-    ) {}
+        private configService: ConfigService<EnvironmentVariables>,
+    ) {
+        this.logger.log('Environment variables', JSON.stringify(this.configService.get('NUMBER_OF_BEDS')));
+        this.logger.log('Environment variables', JSON.stringify(this.configService.get('MONTHLY_FEE')));
+        this.logger.log('Environment variables', JSON.stringify(this.configService.get('EXTRA_BEDRIDDEN')));
+        this.logger.log('Environment variables', JSON.stringify(this.configService.get('EXTRA_WHEELCHAIR')));
+        this.logger.log('Environment variables', JSON.stringify(this.configService.get('EXTRA_CANE')));
+    }
 
     async create(createResidentDto: CreateResidentDto) {
         this.logger.log(
@@ -30,6 +47,9 @@ export class ResidentsService {
         );
 
         let relatives = [];
+
+        await this.checkIfBedIsAvailable(createResidentDto.bedNumber);
+
         if (createResidentDto.relatives) {
             relatives = await this.usersRepository.find({
                 where: { id: In(createResidentDto.relatives) },
@@ -55,7 +75,10 @@ export class ResidentsService {
 
         const newResident = await this.residentsRepository.save(resident);
         this.logger.log('Resident created', JSON.stringify(newResident));
-        return plainToClass(Resident, newResident);
+        return {
+            ...plainToClass(Resident, newResident),
+            monthlyFee: this.calculateTotalFee(newResident.mobility),
+        };
     }
 
     async findAll({ page, limit, orderBy, order, search }: QueryParams): Promise<PagedResponse<Resident>> {
@@ -81,7 +104,10 @@ export class ResidentsService {
         this.logger.log('Residents found', JSON.stringify(residents), 'Total count', totalCount);
 
         return {
-            data: residents.map((resident) => plainToClass(Resident, resident)),
+            data: residents.map((resident) => ({
+                ...plainToClass(Resident, resident),
+                monthlyFee: this.calculateTotalFee(resident.mobility),
+            })),
             page,
             limit,
             totalCount,
@@ -102,7 +128,10 @@ export class ResidentsService {
         }
 
         this.logger.log('Resident found', JSON.stringify(resident));
-        return plainToClass(Resident, resident);
+        return {
+            ...plainToClass(Resident, resident),
+            monthlyFee: this.calculateTotalFee(resident.mobility),
+        };
     }
 
     async update(id: number, updateResidentDto: UpdateResidentDto) {
@@ -132,8 +161,13 @@ export class ResidentsService {
             }
         });
 
-        const resident = await this.residentsRepository.preload({
-            id: +id,
+        const resident = await this.findOne(id);
+
+        if (updateResidentDto.bedNumber && resident.bedNumber !== updateResidentDto.bedNumber) {
+            await this.checkIfBedIsAvailable(updateResidentDto.bedNumber);
+        }
+
+        this.residentsRepository.merge(resident, {
             ...updateResidentDto,
             relatives,
         });
@@ -146,7 +180,10 @@ export class ResidentsService {
         const updatedResident = await this.residentsRepository.save(resident);
         this.logger.log('Resident updated', JSON.stringify(updateResidentDto));
 
-        return plainToClass(Resident, updatedResident);
+        return {
+            ...plainToClass(Resident, updatedResident),
+            monthlyFee: this.calculateTotalFee(updatedResident.mobility),
+        };
     }
 
     async remove(id: number): Promise<void> {
@@ -163,5 +200,67 @@ export class ResidentsService {
             throw new NotFoundException('Resident not found');
         }
         return resident;
+    }
+
+    get numberOfBeds(): number {
+        return parseInt(this.configService.get('NUMBER_OF_BEDS'));
+    }
+
+    get monthlyFee(): number {
+        return parseInt(this.configService.get('MONTHLY_FEE'));
+    }
+
+    get extraBedridden(): number {
+        return parseInt(this.configService.get('EXTRA_BEDRIDDEN'));
+    }
+
+    get extraWheelchair(): number {
+        return parseInt(this.configService.get('EXTRA_WHEELCHAIR'));
+    }
+
+    get extraCane(): number {
+        return parseInt(this.configService.get('EXTRA_CANE'));
+    }
+
+    calculateTotalFee(mobility?: Mobility): number {
+        switch (mobility) {
+            case Mobility.Bedridden:
+                return this.monthlyFee + this.extraBedridden;
+            case Mobility.Wheelchair:
+                return this.monthlyFee + this.extraWheelchair;
+            case Mobility.Cane:
+                return this.monthlyFee + this.extraCane;
+            default:
+                return this.monthlyFee;
+        }
+    }
+
+    async checkIfBedIsAvailable(bedNumber: number) {
+        if (bedNumber > this.numberOfBeds) {
+            this.logger.error('Bed number is higher than the number of beds', JSON.stringify(bedNumber), this.numberOfBeds);
+            throw new BadRequestException('Bed number is higher than the number of beds');
+        }
+
+        const resident = await this.residentsRepository.findOne({ where: { bedNumber } });
+        if (resident) {
+            this.logger.error('Bed is already occupied', JSON.stringify({ bedNumber }));
+            throw new BadRequestException('Bed is already occupied');
+        }
+    }
+
+    async getListOfAvailableBeds(): Promise<{ beds: number[] }> {
+        const residents = await this.residentsRepository.find();
+        const occupiedBeds = residents.map((resident) => resident.bedNumber);
+        const availableBeds = Array.from({ length: this.numberOfBeds }, (_, i) => i + 1).filter((bed) => !occupiedBeds.includes(bed));
+        this.logger.log('Available beds', JSON.stringify(availableBeds));
+        return {
+            beds: availableBeds,
+        };
+    }
+
+    getBudget(mobility?: Mobility): { budget: number } {
+        return {
+            budget: this.calculateTotalFee(mobility),
+        };
     }
 }
