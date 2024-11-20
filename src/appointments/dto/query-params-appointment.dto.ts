@@ -6,7 +6,7 @@ import { AppointmentStatus, AppointmentType } from '../entities/appointment.enti
 export class QueryParamsAppointmentDto extends QueryParamsDto {
     @IsOptional()
     @IsString()
-    @Matches(/^(id|start|title|status)$/)
+    @Matches(/^(id|start|title|status|type)$/)
     orderBy?: string;
 
     @IsOptional()
