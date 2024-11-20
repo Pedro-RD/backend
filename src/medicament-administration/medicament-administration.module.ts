@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { MedicamentAdministrationService } from './medicament-administration.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Medicament } from '../medicaments/entities/medicament.entity';
+import { MedicamentAdministration } from './entities/medicament-administration.entity';
 import { MedicamentAdministrationController } from './medicament-administration.controller';
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { MedicamentAdministration } from "./entities/medicament-administration.entity";
-import { Medicament } from "../medicaments/entities/medicament.entity";
+import { MedicamentAdministrationService } from './medicament-administration.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MedicamentAdministration, Medicament])],
-  controllers: [MedicamentAdministrationController],
-  providers: [MedicamentAdministrationService],
+    imports: [TypeOrmModule.forFeature([MedicamentAdministration, Medicament])],
+    controllers: [MedicamentAdministrationController],
+    providers: [MedicamentAdministrationService],
 })
 export class MedicamentAdministrationModule {}
