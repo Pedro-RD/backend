@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CivilStatus } from '../enums/civilStatus.enum';
 import { Diet } from '../enums/diet.enum';
+import Mobility from '../enums/mobility.enum';
 
 export class CreateResidentDto {
     @IsString()
@@ -38,6 +39,10 @@ export class CreateResidentDto {
     @IsEnum(Diet)
     @IsNotEmpty()
     diet: Diet;
+
+    @IsOptional()
+    @IsEnum(Mobility)
+    mobility: Mobility;
 
     @IsOptional()
     @IsString()

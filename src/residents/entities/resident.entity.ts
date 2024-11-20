@@ -6,6 +6,7 @@ import { Medicament } from '../../medicaments/entities/medicament.entity';
 import { User } from '../../users/entities/user.entity';
 import { CivilStatus } from '../enums/civilStatus.enum';
 import { Diet } from '../enums/diet.enum';
+import Mobility from '../enums/mobility.enum';
 
 @Entity()
 export class Resident {
@@ -39,13 +40,23 @@ export class Resident {
     })
     diet: Diet;
 
+    @Column({
+        type: 'enum',
+        enum: Mobility,
+        nullable: true,
+    })
+    mobility: Mobility;
+
     @Column({ nullable: true })
     dietRestrictions: string | null;
 
     @Column({ nullable: true })
     allergies: string | null;
 
-    @Column()
+    @Column({
+        unique: true,
+        nullable: true,
+    })
     bedNumber: number;
 
     @ManyToMany(() => User, (relative) => relative.residents)
