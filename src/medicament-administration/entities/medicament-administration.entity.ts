@@ -1,34 +1,28 @@
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn, Entity, JoinColumn, ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from "typeorm";
-import { Medicament } from "../../medicaments/entities/medicament.entity";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Medicament } from '../../medicaments/entities/medicament.entity';
 
 @Entity()
 export class MedicamentAdministration {
-  @PrimaryGeneratedColumn()
-  id: number;
+    @PrimaryGeneratedColumn()
+    id: number;
 
-  @Column()
-  hour: string;
+    @Column()
+    hour: string;
 
-  @Column()
-  dose: number;
+    @Column()
+    dose: number;
 
-  @ManyToOne(() => Medicament, (medicament) => medicament.medicamentAdministrations)
-  @JoinColumn()
-  medicament: Medicament;
+    @ManyToOne(() => Medicament, (medicament) => medicament.medicamentAdministrations)
+    @JoinColumn()
+    medicament: Medicament;
 
-  // Timestamps
-  @CreateDateColumn()
-  createdAt: Date;
+    // Timestamps
+    @CreateDateColumn()
+    createdAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+    @UpdateDateColumn()
+    updatedAt: Date;
 
-  @DeleteDateColumn()
-  deletedAt: Date;
+    @DeleteDateColumn()
+    deletedAt: Date;
 }
