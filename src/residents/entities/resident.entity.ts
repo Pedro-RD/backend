@@ -3,6 +3,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinTable, ManyToMa
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { HealthReport } from '../../health-report/entities/health-report.entity';
 import { Medicament } from '../../medicaments/entities/medicament.entity';
+import { Message } from '../../messages/entities/message.entity';
 import { Payment } from '../../payments/entities/payment.entity';
 import { User } from '../../users/entities/user.entity';
 import { CivilStatus } from '../enums/civilStatus.enum';
@@ -75,6 +76,9 @@ export class Resident {
 
     @OneToMany(() => Payment, (payment) => payment.resident)
     payments: Payment[];
+
+    @OneToMany(() => Message, (message) => message.resident)
+    messages: Message[];
 
     // Timestamps
     @CreateDateColumn()

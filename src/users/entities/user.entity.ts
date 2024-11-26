@@ -1,7 +1,8 @@
 import { Exclude } from 'class-transformer';
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToMany, OneToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 import { Employee } from '../../employee/entities/employee.entity';
 import { Role } from '../../enums/roles.enum';
+import { Message } from '../../messages/entities/message.entity';
 import { Resident } from '../../residents/entities/resident.entity';
 
 @Entity()
@@ -46,6 +47,10 @@ export class User {
 
     @ManyToMany(() => Resident, (resident) => resident.relatives)
     residents: Resident[];
+
+    @Exclude()
+    @OneToMany(() => Message, (message) => message.user)
+    messages: Message[];
 
     @OneToOne(() => Employee, (employee) => employee.user)
     employee: Employee;
