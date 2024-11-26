@@ -1,4 +1,5 @@
-import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import { QueryParamsDto } from '../../query/query-params.dto';
 import { PaymentType } from '../enums/payment-type.enum';
 
@@ -11,9 +12,13 @@ export class QueryParamsPaymentsDto extends QueryParamsDto {
     orderBy?: string;
 
     @IsOptional()
+    @Type(() => Date)
+    @IsDate()
     from?: Date;
 
     @IsOptional()
+    @Type(() => Date)
+    @IsDate()
     to?: Date;
 
     @IsOptional()

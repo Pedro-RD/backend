@@ -25,7 +25,13 @@ export class MessagesController {
     @Roles(Role.Manager, Role.Relative, Role.Caretaker)
     @Get()
     findAll(@Param('residentId', ParseIntPipe) residentId, @UserReq() user: User, @Query() queryParams: QueryParamsMessagesDto) {
-        return this.messagesService.findAll(residentId, user, queryParams);
+        return this.messagesService.findAll(residentId, user, {
+            ...queryParams,
+            orderBy: queryParams.orderBy || 'createdAt',
+            order: queryParams.order || 'DESC',
+            page: queryParams.page || 1,
+            limit: queryParams.limit || 10,
+        });
     }
 
     @UseGuards(AuthGuard, RolesGuard)

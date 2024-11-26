@@ -1,39 +1,37 @@
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity, JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from "typeorm";
-import { User } from "../../users/entities/user.entity";
+import { Exclude } from 'class-transformer';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Shift } from '../../shifts/entities/shift.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Employee {
-  @PrimaryGeneratedColumn()
-  id: number;
+    @PrimaryGeneratedColumn()
+    id: number;
 
-  @Column()
-  salary: number;
+    @Column()
+    salary: number;
 
-  @Column()
-  contractStart: Date;
+    @Column()
+    contractStart: Date;
 
-  @Column({nullable: true})
-  contractEnds: Date;
+    @Column({ nullable: true })
+    contractEnds: Date;
 
-  @OneToOne(() => User, (user) => user.employee)
-  @JoinColumn()
-  user: User;
+    @OneToOne(() => User, (user) => user.employee)
+    @JoinColumn()
+    user: User;
 
-  // Timestamps
-  @CreateDateColumn()
-  createdAt: Date;
+    @Exclude()
+    @OneToMany(() => Shift, (shift) => shift.employee)
+    shifts: Shift[];
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+    // Timestamps
+    @CreateDateColumn()
+    createdAt: Date;
 
-  @DeleteDateColumn()
-  deletedAt: Date;
+    @UpdateDateColumn()
+    updatedAt: Date;
+
+    @DeleteDateColumn()
+    deletedAt: Date;
 }

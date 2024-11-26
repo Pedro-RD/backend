@@ -18,6 +18,8 @@ import { Payment } from './payments/entities/payment.entity';
 import { PaymentsModule } from './payments/payments.module';
 import { Resident } from './residents/entities/resident.entity';
 import { ResidentsModule } from './residents/residents.module';
+import { Shift } from './shifts/entities/shift.entity';
+import { ShiftsModule } from './shifts/shifts.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 
@@ -29,7 +31,7 @@ import { UsersModule } from './users/users.module';
         TypeOrmModule.forRoot({
             type: 'postgres',
             url: process.env.DATABASE_URL,
-            entities: [User, Employee, Resident, HealthReport, Medicament, MedicamentAdministration, Appointment, Payment, Message],
+            entities: [User, Employee, Resident, HealthReport, Medicament, MedicamentAdministration, Appointment, Payment, Message, Shift],
             synchronize: true,
         }),
         AuthModule,
@@ -42,6 +44,7 @@ import { UsersModule } from './users/users.module';
         AppointmentsModule,
         PaymentsModule,
         MessagesModule,
+        ShiftsModule,
     ],
 })
 export class AppModule {}
