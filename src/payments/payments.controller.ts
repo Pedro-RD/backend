@@ -15,7 +15,13 @@ export class PaymentsController {
 
     @Get()
     findAll(@Param('residentId', ParseIntPipe) residentId, @Query() query: QueryParamsPaymentsDto) {
-        return this.paymentsService.findAll(residentId, query);
+        return this.paymentsService.findAll(residentId, {
+            ...query,
+            orderBy: query.orderBy || 'createdAt',
+            order: query.order || 'DESC',
+            page: query.page || 1,
+            limit: query.limit || 10,
+        });
     }
 
     @Get(':id')
