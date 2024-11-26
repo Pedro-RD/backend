@@ -10,5 +10,6 @@ import { ResidentsService } from './residents.service';
     imports: [TypeOrmModule.forFeature([Resident, User]), ConfigModule],
     controllers: [ResidentsController],
     providers: [ResidentsService],
+    exports: [ResidentsService],
 })
 export class ResidentsModule {}

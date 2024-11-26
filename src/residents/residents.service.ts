@@ -163,21 +163,27 @@ export class ResidentsService {
 
         const resident = await this.findOne(id);
 
-        if (updateResidentDto.bedNumber && resident.bedNumber !== updateResidentDto.bedNumber) {
-            await this.checkIfBedIsAvailable(updateResidentDto.bedNumber);
-        }
-
-        this.residentsRepository.merge(resident, {
-            ...updateResidentDto,
-            relatives,
-        });
-
         if (!resident) {
             this.logger.error('Resident not found', JSON.stringify({ id }));
             throw new NotFoundException(`Resident not found`);
         }
 
-        const updatedResident = await this.residentsRepository.save(resident);
+        if (updateResidentDto.bedNumber && resident.bedNumber !== updateResidentDto.bedNumber) {
+            await this.checkIfBedIsAvailable(updateResidentDto.bedNumber);
+        }
+
+        if (relatives.length > 0) {
+            // remove all relatives from the resident  before adding the new ones
+            await this.residentsRepository.createQueryBuilder().relation(Resident, 'relatives').of(resident).remove(resident.relatives);
+        }
+
+        const newData = {
+            ...resident,
+            ...updateResidentDto,
+            relatives: relatives.length > 0 ? relatives : resident.relatives,
+        };
+
+        const updatedResident = await this.residentsRepository.save(newData);
         this.logger.log('Resident updated', JSON.stringify(updateResidentDto));
 
         return {

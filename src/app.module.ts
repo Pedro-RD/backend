@@ -12,6 +12,8 @@ import { MedicamentAdministration } from './medicament-administration/entities/m
 import { MedicamentAdministrationModule } from './medicament-administration/medicament-administration.module';
 import { Medicament } from './medicaments/entities/medicament.entity';
 import { MedicamentsModule } from './medicaments/medicaments.module';
+import { Payment } from './payments/entities/payment.entity';
+import { PaymentsModule } from './payments/payments.module';
 import { Resident } from './residents/entities/resident.entity';
 import { ResidentsModule } from './residents/residents.module';
 import { User } from './users/entities/user.entity';
@@ -25,15 +27,7 @@ import { UsersModule } from './users/users.module';
         TypeOrmModule.forRoot({
             type: 'postgres',
             url: process.env.DATABASE_URL,
-            entities: [
-                User,
-                Employee,
-                Resident,
-                HealthReport,
-                Medicament,
-                MedicamentAdministration,
-                Appointment,
-            ],
+            entities: [User, Employee, Resident, HealthReport, Medicament, MedicamentAdministration, Appointment, Payment],
             synchronize: true,
         }),
         AuthModule,
@@ -44,6 +38,7 @@ import { UsersModule } from './users/users.module';
         MedicamentAdministrationModule,
         EmployeeModule,
         AppointmentsModule,
+        PaymentsModule,
     ],
 })
 export class AppModule {}
