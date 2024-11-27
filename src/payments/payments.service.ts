@@ -17,7 +17,7 @@ export class PaymentsService {
         @InjectRepository(Payment) private paymentsRepository: Repository<Payment>,
         @InjectRepository(Resident) private residentsRepository: Repository<Resident>,
         private residentsService: ResidentsService,
-    ) {}
+    ) { }
 
     async create(residentId: number, createPaymentDto: CreatePaymentDto) {
         this.logger.log(`Creating payment for resident ${residentId} with data ${JSON.stringify(createPaymentDto)}`);
@@ -48,8 +48,10 @@ export class PaymentsService {
         // check if payment already exists
 
         const payment = await this.paymentsRepository.findOne({
-            where: { resident, month: createPaymentDto.month, year: createPaymentDto.year },
+            where: { resident: { id: residentId }, month: createPaymentDto.month, year: createPaymentDto.year }, relations: ['resident'],
         });
+
+        this.logger.log(`Payment for month ${createPaymentDto.month} and year ${createPaymentDto.year} with data ${JSON.stringify(payment)}`);
 
         if (payment) {
             this.logger.error(`Payment for month ${createPaymentDto.month} and year ${createPaymentDto.year} already exists`);
@@ -171,16 +173,16 @@ export class PaymentsService {
         const newPayment =
             payment.type === PaymentType.MonthlyFee
                 ? {
-                      date: updatePaymentDto.date ?? payment.date,
-                      month: updatePaymentDto.month ?? payment.month,
-                      year: updatePaymentDto.year ?? payment.year,
-                      observation: updatePaymentDto.observation,
-                  }
+                    date: updatePaymentDto.date ?? payment.date,
+                    month: updatePaymentDto.month ?? payment.month,
+                    year: updatePaymentDto.year ?? payment.year,
+                    observation: updatePaymentDto.observation,
+                }
                 : {
-                      amount: updatePaymentDto.amount ?? payment.amount,
-                      date: updatePaymentDto.date ?? payment.date,
-                      observation: updatePaymentDto.observation ?? payment.observation,
-                  };
+                    amount: updatePaymentDto.amount ?? payment.amount,
+                    date: updatePaymentDto.date ?? payment.date,
+                    observation: updatePaymentDto.observation ?? payment.observation,
+                };
 
         const updatedPayment = await this.paymentsRepository.save({
             ...payment,
