@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { QueryParamsMedicamentAdministrationDto } from '../query/query-params-medicament-administration.dto';
 import { CreateMedicamentAdministrationDto } from './dto/create-medicament-administration.dto';
 import { UpdateMedicamentAdministrationDto } from './dto/update-medicament-administration.dto';
@@ -6,7 +6,7 @@ import { MedicamentAdministrationService } from './medicament-administration.ser
 
 @Controller('medicament/:medicamentId/administration')
 export class MedicamentAdministrationController {
-    constructor(private readonly medicamentAdministrationService: MedicamentAdministrationService) {}
+    constructor(private readonly medicamentAdministrationService: MedicamentAdministrationService) { }
 
     @Post()
     create(@Param('medicamentId') medicamentId: number, @Body() createMedicamentAdministrationDto: CreateMedicamentAdministrationDto) {
@@ -36,6 +36,7 @@ export class MedicamentAdministrationController {
     }
 
     @Delete(':id')
+    @HttpCode(HttpStatus.NO_CONTENT)
     remove(@Param('medicamentId') medicamentId: number, @Param('id') id: string) {
         return this.medicamentAdministrationService.remove(+medicamentId, +id);
     }

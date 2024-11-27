@@ -22,6 +22,7 @@ import { Shift } from './shifts/entities/shift.entity';
 import { ShiftsModule } from './shifts/shifts.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
     imports: [
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
         PaymentsModule,
         MessagesModule,
         ShiftsModule,
+        ReportsModule,
     ],
 })
 export class AppModule {}
