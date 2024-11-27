@@ -17,7 +17,7 @@ export class EmployeeService {
         private readonly employeesRepository: Repository<Employee>,
         @InjectRepository(User)
         private readonly usersRepository: Repository<User>,
-    ) {}
+    ) { }
 
     async create(createEmployeeDto: CreateEmployeeDto) {
         const user = await this.getUserOrFail(createEmployeeDto.userId);
@@ -83,7 +83,6 @@ export class EmployeeService {
     async remove(id: number) {
         await this.getEmployeeOrFail(id);
         await this.employeesRepository.softDelete(id);
-        return 'successfully deleted employee';
     }
 
     private async getEmployeeOrFail(id: number): Promise<Employee> {

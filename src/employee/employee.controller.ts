@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { QueryParamsEmployeeDto } from './dto/query-params-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -6,7 +6,7 @@ import { EmployeeService } from './employee.service';
 
 @Controller('employees')
 export class EmployeeController {
-    constructor(private readonly employeeService: EmployeeService) {}
+    constructor(private readonly employeeService: EmployeeService) { }
 
     @Post()
     create(@Body() createEmployeeDto: CreateEmployeeDto) {
@@ -35,6 +35,7 @@ export class EmployeeController {
     }
 
     @Delete(':id')
+    @HttpCode(HttpStatus.NO_CONTENT)
     remove(@Param('id') id: string) {
         return this.employeeService.remove(+id);
     }

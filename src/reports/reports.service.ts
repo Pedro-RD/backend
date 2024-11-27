@@ -13,14 +13,14 @@ export class ReportsService {
     constructor(
         @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
         @InjectRepository(Payment) private paymentRepository: Repository<Payment>,
-    ) {}
+    ) { }
 
     async exportExcel(year: number, month: number): Promise<Buffer> {
         const workbook = new Workbook();
         const receivedSheet = workbook.addWorksheet('Recebido');
         const spentSheet = workbook.addWorksheet('Salarios');
 
-        const payments = await this.paymentRepository.find({ where: { year, month } });
+        const payments = await this.paymentRepository.find({ where: { year, month }, relations: ['resident'] });
 
         const employeesQuery = this.employeeRepository.createQueryBuilder('employee');
         employeesQuery.leftJoinAndSelect('employee.user', 'user');
@@ -28,8 +28,12 @@ export class ReportsService {
         employeesQuery.andWhere('(employee.contractEnds >= :date OR employee.contractEnds IS NULL)', { date: new Date(`${year}-${month}-01`) });
         const employees = await employeesQuery.getMany();
 
+
         // Add headers for payments
         receivedSheet.columns = [
+            { header: 'ID Recidente', key: 'residentId', width: 15 },
+            { header: 'Nome Recidente', key: 'residentName', width: 15 },
+            { header: 'Cama', key: 'bed', width: 10 },
             { header: 'ID', key: 'id', width: 10 },
             { header: 'Valor', key: 'amount', width: 15 },
             { header: 'Data', key: 'date', width: 15 },
@@ -41,7 +45,18 @@ export class ReportsService {
 
         // Add rows for payments
         payments.forEach((payment) => {
-            receivedSheet.addRow(payment);
+            receivedSheet.addRow({
+                residentId: payment.resident.id,
+                residentName: payment.resident.name,
+                bed: payment.resident.bedNumber,
+                id: payment.id,
+                amount: payment.amount,
+                date: payment.date,
+                month: payment.month,
+                year: payment.year,
+                type: payment.type,
+                observation: payment.observation,
+            });
         });
 
         // Add headers for employees
@@ -51,6 +66,9 @@ export class ReportsService {
             { header: 'Inicio de Contrato', key: 'contractStart', width: 15 },
             { header: 'Fim de Contrato ', key: 'contractEnds', width: 15 },
             { header: 'ID do Utilizador', key: 'userId', width: 15 },
+            { header: 'Nome do Utilizador', key: 'userName', width: 15 },
+            { header: 'Email do Utilizador', key: 'userEmail', width: 15 },
+            { header: "Cargo do Utilizador", key: 'userRole', width: 15 },
         ];
 
         // Add rows for employees
@@ -61,8 +79,12 @@ export class ReportsService {
                 contractStart: employee.contractStart,
                 contractEnds: employee.contractEnds,
                 userId: employee.user.id,
+                userName: employee.user.name,
+                userEmail: employee.user.email,
+                userRole: employee.user.role,
             });
         });
+
         const arrayBuffer = await workbook.xlsx.writeBuffer();
         const buffer = Buffer.from(arrayBuffer);
         return buffer;

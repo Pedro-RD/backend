@@ -16,7 +16,7 @@ export class MedicamentAdministrationService {
         private readonly medicamentAdministrationRepository: Repository<MedicamentAdministration>,
         @InjectRepository(Medicament)
         private readonly medicamentsRepository: Repository<Medicament>,
-    ) {}
+    ) { }
     async create(medicamentId: number, createMedicamentAdministrationDto: CreateMedicamentAdministrationDto) {
         const medicament = await this.medicamentsRepository.findOne({
             where: { id: medicamentId },
@@ -108,7 +108,6 @@ export class MedicamentAdministrationService {
     async remove(medicamentId: number, id: number) {
         await this.getMedicamentAdministration(medicamentId, id);
         await this.medicamentAdministrationRepository.softDelete(id);
-        return 'success';
     }
 
     private async getMedicamentAdministration(medicamentId: number, id: number): Promise<MedicamentAdministration> {
