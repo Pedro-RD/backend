@@ -17,7 +17,7 @@ export class MedicamentsService {
         private readonly medicamentsRepository: Repository<Medicament>,
         @InjectRepository(Resident)
         private readonly residentsRepository: Repository<Resident>,
-    ) {}
+    ) { }
 
     async create(residentId: number, createMedicamentDto: CreateMedicamentDto) {
         this.logger.log('Creating medicament', createMedicamentDto);
@@ -124,7 +124,7 @@ export class MedicamentsService {
         this.logger.log('Getting medicament with id' + id);
         const medicament = await this.medicamentsRepository.findOne({
             where: { id },
-            relations: ['resident'],
+            relations: ['resident', 'medicamentAdministrations'],
         });
         if (!medicament) {
             this.logger.error('Medicament not found: ' + id);
