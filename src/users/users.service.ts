@@ -66,6 +66,7 @@ export class UsersService {
             // Create query builder
             const queryBuilder = this.usersRepository.createQueryBuilder('user');
             queryBuilder.leftJoinAndSelect('user.residents', 'resident');
+            queryBuilder.leftJoinAndSelect('user.employee', 'employee');
 
             // Apply filters (search, role)
             if (role && !search) {
@@ -125,8 +126,8 @@ export class UsersService {
             user.role === Role.Relative || updateUserDto.role === Role.Relative
                 ? updateUserDto.residents && updateUserDto.residents.length > 0
                     ? await this.residentsRepository.find({
-                          where: { id: In(updateUserDto.residents) },
-                      })
+                        where: { id: In(updateUserDto.residents) },
+                    })
                     : user.residents
                 : [];
 
@@ -191,7 +192,7 @@ export class UsersService {
         // Find user
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['residents'],
+            relations: ['residents', 'employee'],
         });
         // Check if user exists if not throw BadRequestException  400
         if (!user) {
