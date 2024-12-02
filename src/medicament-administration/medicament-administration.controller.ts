@@ -1,18 +1,26 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { QueryParamsMedicamentAdministrationDto } from '../query/query-params-medicament-administration.dto';
 import { CreateMedicamentAdministrationDto } from './dto/create-medicament-administration.dto';
 import { UpdateMedicamentAdministrationDto } from './dto/update-medicament-administration.dto';
 import { MedicamentAdministrationService } from './medicament-administration.service';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../enums/roles.enum';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Controller('medicament/:medicamentId/administration')
 export class MedicamentAdministrationController {
-    constructor(private readonly medicamentAdministrationService: MedicamentAdministrationService) { }
+    constructor(private readonly medicamentAdministrationService: MedicamentAdministrationService) {}
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
     @Post()
     create(@Param('medicamentId') medicamentId: number, @Body() createMedicamentAdministrationDto: CreateMedicamentAdministrationDto) {
         return this.medicamentAdministrationService.create(+medicamentId, createMedicamentAdministrationDto);
     }
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
     @Get()
     findAll(@Param('medicamentId') medicamentId: number, @Query() query: QueryParamsMedicamentAdministrationDto) {
         return this.medicamentAdministrationService.findAll({
@@ -25,16 +33,22 @@ export class MedicamentAdministrationController {
         });
     }
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
     @Get(':id')
     findOne(@Param('medicamentId') medicamentId: number, @Param('id') id: string) {
         return this.medicamentAdministrationService.findOne(+medicamentId, +id);
     }
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
     @Patch(':id')
     update(@Param('medicamentId') medicamentId: number, @Param('id') id: string, @Body() updateMedicamentAdministrationDto: UpdateMedicamentAdministrationDto) {
         return this.medicamentAdministrationService.update(+medicamentId, +id, updateMedicamentAdministrationDto);
     }
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(@Param('medicamentId') medicamentId: number, @Param('id') id: string) {

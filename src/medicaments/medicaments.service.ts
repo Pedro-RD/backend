@@ -17,7 +17,7 @@ export class MedicamentsService {
         private readonly medicamentsRepository: Repository<Medicament>,
         @InjectRepository(Resident)
         private readonly residentsRepository: Repository<Resident>,
-    ) { }
+    ) {}
 
     async create(residentId: number, createMedicamentDto: CreateMedicamentDto) {
         this.logger.log('Creating medicament', createMedicamentDto);
