@@ -119,15 +119,15 @@ export class UsersService {
 
         // Verify if user exists
         const user = await this.getUserOrFail(id);
-        if (updateUserDto.email !== user.email) await this.checkIfEmailExists(updateUserDto.email);
+        if (updateUserDto.email && updateUserDto.email !== user.email) await this.checkIfEmailExists(updateUserDto.email);
 
         // If the user is a relative, check if the residents exist
         const residents =
             user.role === Role.Relative || updateUserDto.role === Role.Relative
                 ? updateUserDto.residents && updateUserDto.residents.length > 0
                     ? await this.residentsRepository.find({
-                        where: { id: In(updateUserDto.residents) },
-                    })
+                          where: { id: In(updateUserDto.residents) },
+                      })
                     : user.residents
                 : [];
 
@@ -164,7 +164,7 @@ export class UsersService {
     async login(email: string, password: string): Promise<User> {
         this.logger.log('Logging in user', email);
         // Find user by email
-        const user = await this.usersRepository.findOne({ where: { email } });
+        const user = await this.usersRepository.findOne({ where: { email }, relations: ['resident'] });
         this.logger.log('User with email:', JSON.stringify(user));
         if (!user) throw new UnauthorizedException('Invalid credentials');
 
