@@ -3,15 +3,21 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryG
 import { Resident } from '../../residents/entities/resident.entity';
 import { User } from '../../users/entities/user.entity';
 import { Medicament } from '../../medicaments/entities/medicament.entity';
-import { Message } from '../../messages/entities/message.entity';
+import { Appointment } from '../../appointments/entities/appointment.entity';
 
 export enum NotificationType {
-    APPOINTMENT = 'CONSULTA',
-    MEDICAMENT = 'MEDICAMENTO',
-    MEDICAMENT_STOCK = 'MEDICAMENTO_STOCK',
-    MEDICAMENT_LOW = 'MEDICAMENTO_BAIXO',
-    MESSAGE = 'MENSAGEM',
-    SHIFT = 'TURNO',
+    APPOINTMENT = 'Consulta',
+    MEDICAMENT = 'Medicamento',
+    MEDICAMENT_STOCK = 'Stock de Medicamento',
+    MEDICAMENT_LOW = 'Baixo Stock de Medicamento',
+    MESSAGE = 'Mensagem',
+    SHIFT = 'Turno',
+}
+
+export enum NotificationStatus {
+    DONE = 'Concluído',
+    CANCELED = 'Cancelado',
+    PENDING = 'Pendente',
 }
 
 @Entity()
@@ -19,14 +25,17 @@ export class NotificationEvent {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ nullable: true })
-    messageContent: string;
+    @Column()
+    message: string;
 
-    @Column({ type: 'enum', enum: NotificationType, nullable: true })
+    @Column({ type: 'enum', enum: NotificationType, nullable: false })
     type: NotificationType;
 
+    @Column({ type: 'enum', enum: NotificationStatus, nullable: false })
+    status: NotificationStatus;
+
     @Column({ nullable: true })
-    date: Date;
+    date: Date | null;
 
     @ManyToOne(() => Resident, { nullable: true })
     resident?: Resident | null;
@@ -36,6 +45,9 @@ export class NotificationEvent {
 
     @ManyToOne(() => Medicament, { nullable: true })
     medicament?: Medicament | null;
+
+    @ManyToOne(() => Appointment, { nullable: true })
+    appointment?: Appointment | null;
 
     // Timestamps
     @CreateDateColumn()
