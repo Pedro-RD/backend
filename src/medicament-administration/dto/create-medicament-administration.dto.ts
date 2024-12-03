@@ -9,3 +9,29 @@ export class CreateMedicamentAdministrationDto {
     @IsNumber()
     dose: number;
 }
+
+export class MedicamentAdministrationDTO {
+    public hour?: number;
+    public minute?: number;
+    public dose?: number;
+
+    constructor(administration: IMedicamentAdministrationText) {
+        if (!administration) {
+            return;
+        }
+
+        if (administration.hour) {
+            const [hour, minute] = administration.hour.split(':').map(Number);
+            this.hour = hour;
+            this.minute = minute;
+        }
+        if (administration.dose) {
+            this.dose = administration.dose;
+        }
+    }
+}
+
+export interface IMedicamentAdministrationText {
+    hour?: string;
+    dose?: number;
+}

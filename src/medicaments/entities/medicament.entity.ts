@@ -2,6 +2,7 @@ import { Exclude } from 'class-transformer';
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinTable, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { MedicamentAdministration } from '../../medicament-administration/entities/medicament-administration.entity';
 import { Resident } from '../../residents/entities/resident.entity';
+import { NotificationEvent } from '../../notifications/entities/notification.entity';
 
 @Entity()
 export class Medicament {
