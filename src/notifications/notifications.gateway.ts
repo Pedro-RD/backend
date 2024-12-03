@@ -12,7 +12,7 @@ interface WebSocketEvents {
     loadNotifications: (payload: NotificationEvent[]) => void;
 }
 
-@WebSocketGateway({ namespace: '/internal' })
+@WebSocketGateway()
 export class NotificationsGateway implements OnModuleInit {
     constructor(private readonly notificationsService: NotificationsService) {}
 

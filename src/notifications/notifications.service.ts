@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationEvent, NotificationStatus, NotificationType } from './entities/notification.entity';
 import { Repository } from 'typeorm';
 import { BehaviorSubject } from 'rxjs';
+import { Cron } from '@nestjs/schedule';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class NotificationsService {
@@ -30,9 +32,9 @@ export class NotificationsService {
         const generalTypes = [
             NotificationType.APPOINTMENT,
             NotificationType.MEDICAMENT,
-            NotificationType.MESSAGE,
             NotificationType.MEDICAMENT_LOW,
             NotificationType.MEDICAMENT_STOCK,
+            NotificationType.MESSAGE,
         ];
         const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
         queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
@@ -49,9 +51,25 @@ export class NotificationsService {
         this._internalNotifications.next(notifications);
     }
 
+    async resetShifts(userReq: User) {
+        const shift = await this.getShifts(userReq);
+        if (shift) {
+            shift.status = NotificationStatus.CANCELED;
+            await this.notificationRepository.save(shift);
+        }
+    }
+
+    async resetMessages(userReq: User) {
+        const messages = await this.getMessages(userReq);
+        messages.forEach(async (message) => {
+            message.status = NotificationStatus.DONE;
+            await this.notificationRepository.save(message);
+        });
+    }
+
     async updateStatus(notificationId: number, status: NotificationStatus) {
         this.logger.log(`Updating notification ${notificationId} status to ${status}`);
-        const notification = await this.notificationRepository.findOne({ where: { id: notificationId } });
+        const notification = await this.notificationRepository.findOne({ where: { id: notificationId }, relations: ['medicament'] });
         if (!notification) {
             return;
         }
@@ -62,7 +80,42 @@ export class NotificationsService {
         if (result.status === NotificationStatus.DONE) {
             this._internalNotifications.next(this.internalNotifications.filter((n) => n.id !== notificationId));
         }
+
+        if (notification.type === NotificationType.MEDICAMENT) {
+            this.eventEmitter.emit('medicament.administration.done', { administration: notification.medicament });
+        }
+
         this.logger.log(`Notification ${notificationId} status updated to ${status}`);
+    }
+
+    async getShifts(user) {
+        const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
+        queryBuilder.leftJoinAndSelect('notification.user', 'user');
+        queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
+        queryBuilder.andWhere('notification.type = :type', { type: NotificationType.SHIFT });
+        queryBuilder.andWhere('notification.user = :user', { user });
+        queryBuilder.orderBy('notification.createdAt', 'DESC');
+
+        const result = await queryBuilder.getMany();
+
+        const [first, ...rest] = result;
+        rest.forEach(async (notification) => {
+            notification.status = NotificationStatus.CANCELED;
+            await this.notificationRepository.save(notification);
+        });
+
+        return first;
+    }
+
+    async getMessages(user: User) {
+        const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
+        queryBuilder.leftJoinAndSelect('notification.userMessage', 'message');
+        queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
+        queryBuilder.andWhere('notification.type = :type', { type: NotificationType.MESSAGE_RELATIVE });
+        queryBuilder.andWhere('message.user = :user', { user });
+        queryBuilder.orderBy('notification.createdAt', 'DESC');
+
+        return await queryBuilder.getMany();
     }
 
     // Handle events
@@ -124,6 +177,18 @@ export class NotificationsService {
             userMessage: payload,
         });
 
+        payload.resident.relatives.forEach(async (relative) => {
+            const notification = this.notificationRepository.create({
+                message: `Nova mensagem sobre o residente ${payload.resident.name}`,
+                type: NotificationType.MESSAGE_RELATIVE,
+                status: NotificationStatus.PENDING,
+                userMessage: payload,
+                user: relative,
+            });
+
+            await this.notificationRepository.save(notification);
+        });
+
         const result = await this.notificationRepository.save(notification);
         this._internalNotifications.next([...this.internalNotifications, result]);
         this.logger.log(`Notification created for message of resident ${payload.resident.id}`);
@@ -157,5 +222,22 @@ export class NotificationsService {
         const result = await this.notificationRepository.save(notification);
         this._internalNotifications.next([...this.internalNotifications, result]);
         this.logger.log(`Notification created for medicament running low ${payload.id}`);
+    }
+
+    @Cron('0 0 * * *')
+    async handleNotificationsCron() {
+        const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
+        queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
+        queryBuilder.andWhere('notification.createdAt < :date', { date: new Date(Date.now() - 86400000) });
+
+        const notifications = await queryBuilder.getMany();
+        notifications.forEach(async (notification) => {
+            notification.status = NotificationStatus.CANCELED;
+            await this.notificationRepository.save(notification);
+        });
+
+        this.loadNotifications();
+
+        this.logger.log('Notifications checked');
     }
 }

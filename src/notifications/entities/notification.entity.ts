@@ -11,6 +11,7 @@ export enum NotificationType {
     MEDICAMENT_STOCK = 'Stock de Medicamento',
     MEDICAMENT_LOW = 'Baixo Stock de Medicamento',
     MESSAGE = 'Mensagem',
+    MESSAGE_RELATIVE = 'Mensagem Familiar',
     SHIFT = 'Turno',
 }
 
