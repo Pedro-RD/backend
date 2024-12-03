@@ -1,34 +1,40 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody } from '@nestjs/websockets';
+import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer } from '@nestjs/websockets';
 import { NotificationsService } from './notifications.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { Server } from 'socket.io';
+import { OnModuleInit, UseGuards } from '@nestjs/common';
+import { NotificationEvent, NotificationStatus } from './entities/notification.entity';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuardWS } from '../auth/guards/rolesws.guard';
+import { AuthGuardWS } from '../auth/guards/authws.guard';
+import { Role } from '../enums/roles.enum';
 
-@WebSocketGateway()
-export class NotificationsGateway {
+interface WebSocketEvents {
+    loadNotifications: (payload: NotificationEvent[]) => void;
+}
+
+@WebSocketGateway({ namespace: '/internal' })
+export class NotificationsGateway implements OnModuleInit {
     constructor(private readonly notificationsService: NotificationsService) {}
 
-    // @SubscribeMessage('createNotification')
-    // create(@MessageBody() createNotificationDto: CreateNotificationDto) {
-    //     return this.notificationsService.create(createNotificationDto);
-    // }
+    @WebSocketServer()
+    server: Server<any, WebSocketEvents>;
 
-    // @SubscribeMessage('findAllNotifications')
-    // findAll() {
-    //     return this.notificationsService.findAll();
-    // }
+    onModuleInit() {
+        this.notificationsService.loadNotifications();
+        this.notificationsService.internalNotifications$.subscribe((notifications) => {
+            this.server.emit('loadNotifications', notifications);
+        });
 
-    // @SubscribeMessage('findOneNotification')
-    // findOne(@MessageBody() id: number) {
-    //     return this.notificationsService.findOne(id);
-    // }
+        // when a new connection is made send the notifications
+        this.server.on('connection', () => {
+            this.server.emit('loadNotifications', this.notificationsService.internalNotifications);
+        });
+    }
 
-    // @SubscribeMessage('updateNotification')
-    // update(@MessageBody() updateNotificationDto: UpdateNotificationDto) {
-    //     return this.notificationsService.update(updateNotificationDto.id, updateNotificationDto);
-    // }
-
-    // @SubscribeMessage('removeNotification')
-    // remove(@MessageBody() id: number) {
-    //     return this.notificationsService.remove(id);
-    // }
+    @UseGuards(AuthGuardWS, RolesGuardWS)
+    @Roles(Role.Manager, Role.Caretaker)
+    @SubscribeMessage('updateStatus')
+    updateStatus(@MessageBody() data: { id: number; status: NotificationStatus }) {
+        return this.notificationsService.updateStatus(data.id, data.status);
+    }
 }

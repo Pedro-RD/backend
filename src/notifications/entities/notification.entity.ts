@@ -1,9 +1,9 @@
 import { Exclude } from 'class-transformer';
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { Resident } from '../../residents/entities/resident.entity';
 import { User } from '../../users/entities/user.entity';
 import { Medicament } from '../../medicaments/entities/medicament.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
+import { Message } from '../../messages/entities/message.entity';
 
 export enum NotificationType {
     APPOINTMENT = 'Consulta',
@@ -37,9 +37,6 @@ export class NotificationEvent {
     @Column({ nullable: true })
     date: Date | null;
 
-    @ManyToOne(() => Resident, { nullable: true })
-    resident?: Resident | null;
-
     @ManyToOne(() => User, { nullable: true })
     user?: User | null;
 
@@ -48,6 +45,9 @@ export class NotificationEvent {
 
     @ManyToOne(() => Appointment, { nullable: true })
     appointment?: Appointment | null;
+
+    @ManyToOne(() => Message, { nullable: true })
+    userMessage?: Message | null;
 
     // Timestamps
     @CreateDateColumn()

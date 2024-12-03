@@ -50,9 +50,11 @@ export class MessagesService {
 
         this.logger.log(`Message ${result.id} created for resident ${residentId} by user ${user.id}`);
         const rxp = plainToClass(Message, result);
+
+        // load resident
         this.eventEmitter.emit(
             'message.created',
-            new MessagesEvent(rxp.content, rxp.resident, { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role }),
+            new MessagesEvent(rxp.content, result.resident, { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role }),
         );
         return { ...rxp, user: { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role } };
     }
