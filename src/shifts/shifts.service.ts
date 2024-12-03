@@ -35,7 +35,7 @@ export class ShiftsService {
 
     private async updateOrCreateShifts(employee: Employee, shifts: Shift[]) {
         return shifts.map(async (shift) => {
-            const existingShift = await this.shiftRepository.findOne({ where: { day: shift.day }, relations: ['employee'] });
+            const existingShift = await this.shiftRepository.findOne({ where: { day: shift.day, employee }, relations: ['employee'] });
             this.logger.log(`Existing shift ${existingShift}`);
 
             if (existingShift) {
