@@ -38,6 +38,7 @@ export class NotificationsService {
         ];
         const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
         queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
+
         // Created in the last day
         queryBuilder.andWhere('notification.createdAt >= :date', { date: new Date(Date.now() - 86400000) });
         queryBuilder.andWhere('notification.type IN (:...types)', { types: generalTypes });
@@ -53,10 +54,10 @@ export class NotificationsService {
 
     async resetShifts(userReq: User) {
         const shift = await this.getShifts(userReq);
-        if (shift) {
-            shift.status = NotificationStatus.CANCELED;
-            await this.notificationRepository.save(shift);
-        }
+        shift.forEach(async (notification) => {
+            notification.status = NotificationStatus.DONE;
+            await this.notificationRepository.save(notification);
+        });
     }
 
     async resetMessages(userReq: User) {
@@ -93,7 +94,7 @@ export class NotificationsService {
         queryBuilder.leftJoinAndSelect('notification.user', 'user');
         queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
         queryBuilder.andWhere('notification.type = :type', { type: NotificationType.SHIFT });
-        queryBuilder.andWhere('notification.user = :user', { user });
+        Logger.log(user);
         queryBuilder.orderBy('notification.createdAt', 'DESC');
 
         const result = await queryBuilder.getMany();
@@ -104,15 +105,15 @@ export class NotificationsService {
             await this.notificationRepository.save(notification);
         });
 
-        return first;
+        return first ? [first] : [];
     }
 
     async getMessages(user: User) {
         const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
-        queryBuilder.leftJoinAndSelect('notification.userMessage', 'message');
+
         queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
         queryBuilder.andWhere('notification.type = :type', { type: NotificationType.MESSAGE_RELATIVE });
-        queryBuilder.andWhere('message.user = :user', { user });
+        queryBuilder.andWhere('notification.user.id = :userId', { userId: user.id });
         queryBuilder.orderBy('notification.createdAt', 'DESC');
 
         return await queryBuilder.getMany();
@@ -125,7 +126,7 @@ export class NotificationsService {
 
         // Create a notification
         const notification = this.notificationRepository.create({
-            message: `Turno atualizado para o empregado ${payload.employee}`,
+            message: `Turno atualizado`,
             type: NotificationType.SHIFT,
             status: NotificationStatus.PENDING,
             user: payload.employee.user,

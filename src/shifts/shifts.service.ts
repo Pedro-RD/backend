@@ -21,7 +21,7 @@ export class ShiftsService {
 
     async create(employeeId: number, createShiftDto: CreateShiftDto) {
         this.logger.log(`Creating shifts for employee ${employeeId}`);
-        const employee = await this.employeeRepository.findOne({ where: { id: employeeId } });
+        const employee = await this.employeeRepository.findOne({ where: { id: employeeId }, relations: ['user'] });
         if (!employee) {
             throw new Error('Employee not found');
         }
