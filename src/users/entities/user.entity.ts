@@ -39,6 +39,9 @@ export class User {
     @Column({ length: 50 })
     nationality: string;
 
+    @Column({ nullable: true, default: null })
+    profilePicture: string;
+
     @Column({
         type: 'enum',
         enum: Role,

@@ -1,11 +1,9 @@
 import { PipeTransform, Injectable, ArgumentMetadata, ForbiddenException, Logger } from '@nestjs/common';
 
 @Injectable()
-export class FileSizeValidationPipe implements PipeTransform {
+export class FileValidationPipe implements PipeTransform {
     logger = new Logger('FileSizeValidationPipe');
     transform(value: any, metadata: ArgumentMetadata) {
-        // "value" is an object containing the file's attributes and metadata
-        // check if file size is less than 1MB and png or jpg or jpeg
         this.logger.log(`Incoming file: ${JSON.stringify(value)} with metadata: ${JSON.stringify(metadata)}`);
 
         if (!value) {
@@ -14,11 +12,12 @@ export class FileSizeValidationPipe implements PipeTransform {
 
         const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg'];
         if (!allowedMimeTypes.includes(value.mimetype)) {
-            this;
+            this.logger.error(`Invalid file format: ${value.mimetype}`);
             throw new ForbiddenException('Formato de arquivo inválido. Apenas PNG, JPG e JPEG são permitidos');
         }
 
         if (value.size > 1000000) {
+            this.logger.error(`File size too large: ${value.size}`);
             throw new ForbiddenException('Tamanho máximo permitido é 1MB');
         }
 

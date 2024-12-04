@@ -27,6 +27,7 @@ import { Roles } from '../auth/roles.decorator';
 import { UserReq } from '../auth/user.decorator';
 import { User } from './entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidationPipe } from './file-validation.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -50,8 +51,21 @@ export class UsersController {
     @Roles(Role.Manager, Role.Relative, Role.Caretaker)
     @Post(':id/upload')
     @UseInterceptors(FileInterceptor('file'))
-    uploadFile(@UploadedFile() file: Express.Multer.File) {
-        console.log(file);
+    uploadFile(@Param('id', ParseIntPipe) id, @UploadedFile(new FileValidationPipe()) file: Express.Multer.File, @UserReq() userReq: User) {
+        if (userReq.role !== Role.Manager && userReq.id !== id) {
+            throw new ForbiddenException('Não tem permissão para aceder a este recurso');
+        }
+        return this.usersService.addProfilePicture(id, file);
+    }
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Relative, Role.Caretaker)
+    @Delete(':id/upload')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    removeFile(@Param('id', ParseIntPipe) id, @UserReq() userReq: User) {
+        if (userReq.role !== Role.Manager && userReq.id !== id) {
+            throw new ForbiddenException('Não tem permissão para aceder a este recurso');
+        }
+        return this.usersService.clearProfilePicture(id);
     }
 
     @UseGuards(AuthGuard, RolesGuard)
