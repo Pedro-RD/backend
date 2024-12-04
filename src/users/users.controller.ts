@@ -1,4 +1,20 @@
-import { Body, Controller, Delete, ForbiddenException, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    ForbiddenException,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Query,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResetPasswordDTO } from './dto/password-reset.dto';
 import { QueryParamsUsersDto } from './dto/query-params-users.dto';
@@ -10,6 +26,7 @@ import { Role } from '../enums/roles.enum';
 import { Roles } from '../auth/roles.decorator';
 import { UserReq } from '../auth/user.decorator';
 import { User } from './entities/user.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -27,6 +44,14 @@ export class UsersController {
             search: query.search || '',
             role: query.role,
         });
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Relative, Role.Caretaker)
+    @Post(':id/upload')
+    @UseInterceptors(FileInterceptor('file'))
+    uploadFile(@UploadedFile() file: Express.Multer.File) {
+        console.log(file);
     }
 
     @UseGuards(AuthGuard, RolesGuard)
