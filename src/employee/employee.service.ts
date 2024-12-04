@@ -67,20 +67,15 @@ export class EmployeeService {
         return plainToClass(Employee, employee);
     }
 
-    async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
-        this.logger.log(`Updating employee with id: ${id} with data: ${JSON.stringify(updateEmployeeDto)}`);
-        const user = await this.getUserOrFail(updateEmployeeDto.userId);
+    async update(id: number, { salary, contractEnds, contractStart }: UpdateEmployeeDto) {
+        this.logger.log(`Updating employee with id: ${id} with data: ${JSON.stringify({ salary, contractEnds, contractStart })}`);
 
         try {
-            const employee = await this.employeesRepository.preload({
-                id: id,
-                ...updateEmployeeDto,
-                user,
-            });
+            await this.getEmployeeOrFail(id);
 
-            const result = await this.employeesRepository.save(employee);
+            const result = await this.employeesRepository.save({ id, salary, contractEnds, contractStart });
             this.logger.log(`Employee updated successfully: ${JSON.stringify(result)}`);
-            return plainToClass(Employee, employee);
+            return plainToClass(Employee, result);
         } catch (e) {
             this.logger.error(`An error occurred while updating the employee: ${e.message}`);
             throw new BadRequestException('Ocorreu um erro ao atualizar o funcionário');
