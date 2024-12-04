@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { plainToClass } from 'class-transformer';
@@ -210,5 +212,34 @@ export class UsersService {
             this.logger.error(`Email ${email} already in use`);
             throw new BadRequestException('Email already in use');
         }
+    }
+
+    async addProfilePicture(id: number, file: Express.Multer.File) {
+        this.logger.log(`Adding profile picture for user ${id} with file ${JSON.stringify(file)}`);
+        // Find user
+        const user = await this.getUserOrFail(id);
+        // Update user
+
+        // if user already has a profile picture, delete it
+        if (user.profilePicture && fs.existsSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'users', user.profilePicture))) {
+            this.logger.log(`Deleting profile picture ${user.profilePicture}`);
+            fs.unlinkSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'users', user.profilePicture));
+        }
+
+        user.profilePicture = file.filename;
+        await this.usersRepository.save(user);
+        this.logger.log(`Profile picture added for user ${id} with file ${JSON.stringify(file)}`);
+        // Return updated user
+        return plainToClass(User, user);
+    }
+
+    async clearProfilePicture(id: number) {
+        const user = await this.getUserOrFail(id);
+        if (user.profilePicture && fs.existsSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'users', user.profilePicture))) {
+            this.logger.log(`Deleting profile picture ${user.profilePicture}`);
+            fs.unlinkSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'users', user.profilePicture));
+        }
+        user.profilePicture = null;
+        await this.usersRepository.save(user);
     }
 }
