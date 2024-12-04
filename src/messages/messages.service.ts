@@ -9,12 +9,15 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { QueryParamsMessagesDto } from './dto/query-params-messages.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { Message } from './entities/message.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MessagesEvent } from '../events/message.event';
 
 @Injectable()
 export class MessagesService {
     private readonly logger = new Logger(MessagesService.name);
 
     constructor(
+        private readonly eventEmitter: EventEmitter2,
         @InjectRepository(Message) private readonly messageRepository: Repository<Message>,
         @InjectRepository(Resident) private readonly residentRepository: Repository<Resident>,
     ) {}
@@ -47,6 +50,12 @@ export class MessagesService {
 
         this.logger.log(`Message ${result.id} created for resident ${residentId} by user ${user.id}`);
         const rxp = plainToClass(Message, result);
+
+        // load resident
+        this.eventEmitter.emit(
+            'message.created',
+            new MessagesEvent(rxp.content, result.resident, { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role }),
+        );
         return { ...rxp, user: { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role } };
     }
 

@@ -23,6 +23,10 @@ import { ShiftsModule } from './shifts/shifts.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationEvent } from './notifications/entities/notification.entity';
 
 @Module({
     imports: [
@@ -32,9 +36,11 @@ import { ReportsModule } from './reports/reports.module';
         TypeOrmModule.forRoot({
             type: 'postgres',
             url: process.env.DATABASE_URL,
-            entities: [User, Employee, Resident, HealthReport, Medicament, MedicamentAdministration, Appointment, Payment, Message, Shift],
+            entities: [User, Employee, Resident, HealthReport, Medicament, MedicamentAdministration, Appointment, Payment, Message, Shift, NotificationEvent],
             synchronize: true,
         }),
+        EventEmitterModule.forRoot(),
+        ScheduleModule.forRoot(),
         AuthModule,
         UsersModule,
         ResidentsModule,
@@ -47,6 +53,7 @@ import { ReportsModule } from './reports/reports.module';
         MessagesModule,
         ShiftsModule,
         ReportsModule,
+        NotificationsModule,
     ],
 })
 export class AppModule {}

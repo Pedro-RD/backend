@@ -8,15 +8,15 @@ import { Resident } from '../residents/entities/resident.entity';
 import { CreateMedicamentDto } from './dto/create-medicament.dto';
 import { UpdateMedicamentDto } from './dto/update-medicament.dto';
 import { Medicament } from './entities/medicament.entity';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MedicamentsService {
     logger = new Logger('MedicamentsService');
     constructor(
-        @InjectRepository(Medicament)
-        private readonly medicamentsRepository: Repository<Medicament>,
-        @InjectRepository(Resident)
-        private readonly residentsRepository: Repository<Resident>,
+        private eventEmitter: EventEmitter2,
+        @InjectRepository(Medicament) private readonly medicamentsRepository: Repository<Medicament>,
+        @InjectRepository(Resident) private readonly residentsRepository: Repository<Resident>,
     ) {}
 
     async create(residentId: number, createMedicamentDto: CreateMedicamentDto) {
@@ -159,5 +159,28 @@ export class MedicamentsService {
             throw new BadRequestException('Medicament with this name already exists for this resident');
         }
         this.logger.log('Medicament with name', name, 'does not exist for resident', residentId);
+    }
+
+    @OnEvent('medicament.administration.done', { async: true })
+    async handleMedicamentAdministrationDoneEvent(payload: Medicament) {
+        this.logger.log(`Medicament administration done event received for medicament ${payload.id}`);
+
+        const medicament = await this.medicamentsRepository.findOne({
+            where: { id: payload.id },
+            relations: ['resident'],
+        });
+
+        if (medicament.quantity > 0) {
+            medicament.quantity -= 1;
+            await this.medicamentsRepository.save(medicament);
+        }
+
+        if (medicament.quantity === 0) {
+            this.logger.log(`Medicament ${medicament.id} is out of stock`);
+            this.eventEmitter.emit('medicament.out-of-stock', medicament);
+        } else if (medicament.quantity <= 10) {
+            this.logger.log(`Medicament ${medicament.id} is running low`);
+            this.eventEmitter.emit('medicament.running-low', medicament);
+        }
     }
 }

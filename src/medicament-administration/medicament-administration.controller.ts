@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { QueryParamsMedicamentAdministrationDto } from '../query/query-params-medicament-administration.dto';
-import { CreateMedicamentAdministrationDto } from './dto/create-medicament-administration.dto';
+import { CreateMedicamentAdministrationDto, MedicamentAdministrationDTO } from './dto/create-medicament-administration.dto';
 import { UpdateMedicamentAdministrationDto } from './dto/update-medicament-administration.dto';
 import { MedicamentAdministrationService } from './medicament-administration.service';
 import { Roles } from '../auth/roles.decorator';
@@ -16,7 +16,7 @@ export class MedicamentAdministrationController {
     @Roles(Role.Manager, Role.Caretaker)
     @Post()
     create(@Param('medicamentId') medicamentId: number, @Body() createMedicamentAdministrationDto: CreateMedicamentAdministrationDto) {
-        return this.medicamentAdministrationService.create(+medicamentId, createMedicamentAdministrationDto);
+        return this.medicamentAdministrationService.create(+medicamentId, new MedicamentAdministrationDTO(createMedicamentAdministrationDto));
     }
 
     @UseGuards(AuthGuard, RolesGuard)
@@ -44,7 +44,7 @@ export class MedicamentAdministrationController {
     @Roles(Role.Manager, Role.Caretaker)
     @Patch(':id')
     update(@Param('medicamentId') medicamentId: number, @Param('id') id: string, @Body() updateMedicamentAdministrationDto: UpdateMedicamentAdministrationDto) {
-        return this.medicamentAdministrationService.update(+medicamentId, +id, updateMedicamentAdministrationDto);
+        return this.medicamentAdministrationService.update(+medicamentId, +id, new MedicamentAdministrationDTO(updateMedicamentAdministrationDto));
     }
 
     @UseGuards(AuthGuard, RolesGuard)

@@ -6,15 +6,17 @@ import PagedResponse from '../interfaces/paged-response.interface';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { QueryParamsAppointmentDto } from './dto/query-params-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { Appointment } from './entities/appointment.entity';
+import { Appointment, AppointmentStatus } from './entities/appointment.entity';
+import { Cron } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AppointmentsService {
     logger = new Logger(AppointmentsService.name);
 
     constructor(
-        @InjectRepository(Appointment)
-        private appointmentsRepository: Repository<Appointment>,
+        @InjectRepository(Appointment) private appointmentsRepository: Repository<Appointment>,
+        private eventEmitter: EventEmitter2,
     ) {}
 
     private async checkTimeConflict(residentId: number, start: Date | string, id?: number) {
@@ -136,5 +138,71 @@ export class AppointmentsService {
 
         this.logger.log('Soft removing appointment', id);
         return await this.appointmentsRepository.softRemove(appointment);
+    }
+
+    @Cron('0 0 * * * *')
+    async handleNext3Hours() {
+        const now = new Date();
+        const threeHoursLater = new Date(now);
+        threeHoursLater.setHours(threeHoursLater.getHours() + 3);
+
+        const appointments = await this.appointmentsRepository.find({
+            where: {
+                start: Between(now, threeHoursLater),
+            },
+        });
+
+        appointments.forEach((appointment) => {
+            this.eventEmitter.emit('appointment.due', appointment);
+        });
+        this.logger.log('Next 3 hours appointments handled');
+    }
+
+    @Cron('0 0 12 * * *')
+    async handleNextDay() {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const nextDay = new Date(tomorrow);
+        nextDay.setHours(23, 59, 59, 999);
+
+        const appointments = await this.appointmentsRepository.find({
+            where: {
+                start: Between(tomorrow, nextDay),
+            },
+        });
+
+        appointments.forEach((appointment) => {
+            this.eventEmitter.emit('appointment.due', appointment);
+        });
+        this.logger.log('Next day appointments handled');
+    }
+
+    // at midnight set events from last day to done
+    @Cron('0 0 0 * * *')
+    async handlePastDay() {
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const pastDay = new Date(yesterday);
+        pastDay.setHours(23, 59, 59, 999);
+
+        const appointments = await this.appointmentsRepository.find({
+            where: {
+                start: Between(yesterday, pastDay),
+            },
+        });
+
+        // set all appointments to done
+        await Promise.all(
+            appointments.map(async (appointment) => {
+                appointment.status = AppointmentStatus.Done;
+                await this.appointmentsRepository.save(appointment);
+            }),
+        );
+
+        this.logger.log('Past day appointments set to done');
     }
 }

@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Medicament } from '../../medicaments/entities/medicament.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class MedicamentAdministration {
@@ -7,7 +8,10 @@ export class MedicamentAdministration {
     id: number;
 
     @Column()
-    hour: string;
+    hour: number;
+
+    @Column()
+    minute: number;
 
     @Column()
     dose: number;
@@ -23,6 +27,7 @@ export class MedicamentAdministration {
     @UpdateDateColumn()
     updatedAt: Date;
 
+    @Exclude()
     @DeleteDateColumn()
     deletedAt: Date;
 }

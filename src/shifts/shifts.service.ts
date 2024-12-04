@@ -6,19 +6,22 @@ import { Employee } from '../employee/entities/employee.entity';
 import { CreateShiftDto } from './dto/create-shift.dto';
 import { QueryParamsShiftDto } from './dto/query-params-shift.dto';
 import { Shift } from './entities/shift.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ShiftUpdatedEvent } from '../events/shift-updated.event';
 
 @Injectable()
 export class ShiftsService {
     logger = new Logger(ShiftsService.name);
 
     constructor(
+        private eventEmitter: EventEmitter2,
         @InjectRepository(Shift) private shiftRepository: Repository<Shift>,
         @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
     ) {}
 
     async create(employeeId: number, createShiftDto: CreateShiftDto) {
         this.logger.log(`Creating shifts for employee ${employeeId}`);
-        const employee = await this.employeeRepository.findOne({ where: { id: employeeId } });
+        const employee = await this.employeeRepository.findOne({ where: { id: employeeId }, relations: ['user'] });
         if (!employee) {
             throw new Error('Employee not found');
         }
@@ -31,6 +34,7 @@ export class ShiftsService {
         });
 
         await Promise.all(await this.updateOrCreateShifts(employee, shifts));
+        this.eventEmitter.emit('shift.updated', new ShiftUpdatedEvent(employee));
     }
 
     private async updateOrCreateShifts(employee: Employee, shifts: Shift[]) {
