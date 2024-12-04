@@ -17,9 +17,10 @@ export class EmployeeService {
         private readonly employeesRepository: Repository<Employee>,
         @InjectRepository(User)
         private readonly usersRepository: Repository<User>,
-    ) { }
+    ) {}
 
     async create(createEmployeeDto: CreateEmployeeDto) {
+        this.logger.log(`Creating employee with data: ${JSON.stringify(createEmployeeDto)}`);
         const user = await this.getUserOrFail(createEmployeeDto.userId);
 
         try {
@@ -31,12 +32,14 @@ export class EmployeeService {
             await this.employeesRepository.save(employee);
             return plainToClass(Employee, employee);
         } catch (e) {
-            throw new BadRequestException('An error occurred while adding the employee');
+            this.logger.error(`An error occurred while creating the employee: ${e.message}`);
+            throw new BadRequestException('Ocorreu um erro ao criar o funcionário');
         }
     }
 
     async findAll({ order, orderBy, search, limit, page }: QueryParamsEmployeeDto): Promise<PagedResponse<Employee>> {
         //filters are missing
+        this.logger.log(`Fetching employees with order: ${order}, orderBy: ${orderBy}, search: ${search}, limit: ${limit}, page: ${page}`);
         const queryBuilder = this.employeesRepository.createQueryBuilder('employee');
         queryBuilder.leftJoinAndSelect('employee.user', 'user');
 
@@ -59,28 +62,33 @@ export class EmployeeService {
     }
 
     async findOne(id: number) {
+        this.logger.log(`Fetching employee with id: ${id}`);
         const employee = await this.getEmployeeOrFail(id);
         return plainToClass(Employee, employee);
     }
 
     async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
+        this.logger.log(`Updating employee with id: ${id} with data: ${JSON.stringify(updateEmployeeDto)}`);
         const user = await this.getUserOrFail(updateEmployeeDto.userId);
 
         try {
             const employee = await this.employeesRepository.preload({
-                id: +id,
+                id: id,
                 ...updateEmployeeDto,
                 user,
             });
 
-            await this.employeesRepository.save(employee);
+            const result = await this.employeesRepository.save(employee);
+            this.logger.log(`Employee updated successfully: ${JSON.stringify(result)}`);
             return plainToClass(Employee, employee);
         } catch (e) {
-            throw new BadRequestException('An error occurred while updating the employee');
+            this.logger.error(`An error occurred while updating the employee: ${e.message}`);
+            throw new BadRequestException('Ocorreu um erro ao atualizar o funcionário');
         }
     }
 
     async remove(id: number) {
+        this.logger.log(`Deleting employee with id: ${id}`);
         await this.getEmployeeOrFail(id);
         await this.employeesRepository.softDelete(id);
     }
@@ -92,7 +100,8 @@ export class EmployeeService {
         });
 
         if (!employee) {
-            throw new NotFoundException('Employee not found');
+            this.logger.error(`Employee not found with id: ${id}`);
+            throw new NotFoundException('Funcionário não encontrado');
         }
 
         return employee;
@@ -104,7 +113,8 @@ export class EmployeeService {
         });
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            this.logger.error(`User not found with id: ${id}`);
+            throw new NotFoundException('Utilizador não encontrado');
         }
 
         return user;
