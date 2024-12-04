@@ -25,7 +25,35 @@ export class DashboardsService {
         @InjectRepository(NotificationEvent) private readonly notificationRepository: Repository<NotificationEvent>,
     ) {}
 
-    async getManagerDashboardData() {}
+    async getManagerDashboardData() {
+        const now = new Date();
+        const employees = await this.employeeRepository.query(
+            `SELECT * FROM employee WHERE start_date <= '${now.toISOString()}' AND (end_date IS NULL OR end_date >= '${now.toISOString()}')`,
+        );
+
+        const salariesThisMonth = await employees.reduce(async (acc, employee) => {
+            const salary = await this.shiftRepository.query(
+                `SELECT * FROM shift WHERE employee_id = ${employee.id} AND start >= '${new Date(now.getFullYear(), now.getMonth(), 1).toISOString()}' AND end <= '${new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()}'`,
+            );
+
+            return (await acc) + salary;
+        }, 0);
+
+        const residents = await this.residentRepository.find();
+
+        const users = await this.userRepository.find();
+
+        const payments = await this.paymentRepository.query(`SELECT * FROM payment WHERE month = ${now.getMonth()} AND year = ${now.getFullYear()}`);
+        const totalPayments = payments.reduce((acc, payment) => acc + payment.amount, 0);
+
+        return {
+            employees: employees.length,
+            residents: residents.length,
+            users: users.length,
+            totalPayments,
+            salariesThisMonth,
+        };
+    }
 
     async getCaretakerDashboardData() {}
 
