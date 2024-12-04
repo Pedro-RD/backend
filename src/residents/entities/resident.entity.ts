@@ -61,6 +61,9 @@ export class Resident {
     })
     bedNumber: number;
 
+    @Column({ nullable: true, default: null })
+    profilePicture: string;
+
     @ManyToMany(() => User, (relative) => relative.residents)
     @JoinTable({ name: 'resident_user' })
     relatives: User[];
