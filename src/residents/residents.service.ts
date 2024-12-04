@@ -11,6 +11,8 @@ import { CreateResidentDto } from './dto/create-resident.dto';
 import { UpdateResidentDto } from './dto/update-resident.dto';
 import { Resident } from './entities/resident.entity';
 import Mobility from './enums/mobility.enum';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface EnvironmentVariables {
     NUMBER_OF_BEDS: number;
@@ -268,5 +270,33 @@ export class ResidentsService {
         return {
             budget: this.calculateTotalFee(mobility),
         };
+    }
+
+    async addProfilePicture(id: number, file: Express.Multer.File) {
+        this.logger.log(`Adding profile picture for resident ${id} with file ${JSON.stringify(file)}`);
+
+        const resident = await this.getResidentOrFail(id);
+
+        if (resident.profilePicture && fs.existsSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'residents', resident.profilePicture))) {
+            this.logger.log(`Deleting profile picture ${resident.profilePicture}`);
+            fs.unlinkSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'residents', resident.profilePicture));
+        }
+
+        resident.profilePicture = file.filename;
+        await this.residentsRepository.save(resident);
+        this.logger.log(`Profile picture added for resident ${id}`);
+        return plainToClass(Resident, resident);
+    }
+
+    async clearProfilePicture(id: number) {
+        const resident = await this.getResidentOrFail(id);
+
+        if (resident.profilePicture && fs.existsSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'residents', resident.profilePicture))) {
+            this.logger.log(`Deleting profile picture ${resident.profilePicture}`);
+            fs.unlinkSync(path.join(__dirname, '..', '..', 'public', 'uploads', 'residents', resident.profilePicture));
+        }
+
+        resident.profilePicture = null;
+        await this.residentsRepository.save(resident);
     }
 }

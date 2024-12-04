@@ -1,4 +1,22 @@
-import { Body, Controller, Delete, ForbiddenException, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    ForbiddenException,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Query,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidationPipe } from '../users/file-validation.pipe';
 
 import { QueryParamsResidentsDto } from '../query/query-params-residents.dto';
 import { BudgetResidentDto } from './dto/budget-resident.dto';
@@ -77,5 +95,21 @@ export class ResidentsController {
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.residentsService.remove(id);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
+    @Post(':id/upload')
+    @UseInterceptors(FileInterceptor('file'))
+    uploadFile(@Param('id', ParseIntPipe) id, @UploadedFile(new FileValidationPipe()) file: Express.Multer.File) {
+        return this.residentsService.addProfilePicture(id, file);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager, Role.Caretaker)
+    @Delete(':id/upload')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    removeFile(@Param('id', ParseIntPipe) id) {
+        return this.residentsService.clearProfilePicture(id);
     }
 }
