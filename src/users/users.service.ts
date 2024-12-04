@@ -164,7 +164,7 @@ export class UsersService {
     async login(email: string, password: string): Promise<User> {
         this.logger.log('Logging in user', email);
         // Find user by email
-        const user = await this.usersRepository.findOne({ where: { email }, relations: ['residents'] });
+        const user = await this.usersRepository.findOne({ where: { email }, relations: ['residents', 'employee'] });
         this.logger.log('User with email:', JSON.stringify(user));
         if (!user) throw new UnauthorizedException('Invalid credentials');
 
