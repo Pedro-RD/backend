@@ -29,6 +29,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationEvent } from './notifications/entities/notification.entity';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { DashboardsModule } from './dashboards/dashboards.module';
 
 @Module({
     imports: [
@@ -59,6 +60,7 @@ import { join } from 'path';
         ShiftsModule,
         ReportsModule,
         NotificationsModule,
+        DashboardsModule,
     ],
 })
 export class AppModule {}
