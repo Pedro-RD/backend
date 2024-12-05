@@ -17,7 +17,6 @@ export class Employee {
     @Column({ nullable: true })
     contractEnds: Date;
 
-
     @OneToOne(() => User, (user) => user.employee)
     @JoinColumn()
     user: User;

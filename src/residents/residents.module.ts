@@ -25,6 +25,15 @@ import { AuthModule } from '../auth/auth.module';
                         cb(null, filename);
                     },
                 }),
+                fileFilter: (_req, file, cb) => {
+                    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+                        return cb(new Error('Only .jpg, .jpeg, and .png files are allowed!'), false);
+                    }
+                    cb(null, true);
+                },
+                limits: {
+                    fileSize: 1 * 1024 * 1024, // 1 MB
+                },
             }),
         }),
     ],

@@ -16,7 +16,7 @@ export class FileValidationPipe implements PipeTransform {
             throw new ForbiddenException('Formato de arquivo inválido. Apenas PNG, JPG e JPEG são permitidos');
         }
 
-        if (value.size > 1000000) {
+        if (value.size > 1 * 1024 * 1024) {
             this.logger.error(`File size too large: ${value.size}`);
             throw new ForbiddenException('Tamanho máximo permitido é 1MB');
         }

@@ -14,11 +14,20 @@ import { diskStorage } from 'multer';
             useFactory: () => ({
                 storage: diskStorage({
                     destination: './public/uploads/users',
-                    filename: (req, file, cb) => {
+                    filename: (_req, file, cb) => {
                         const filename = `${Date.now()}-${file.originalname}`;
                         cb(null, filename);
                     },
                 }),
+                fileFilter: (_req, file, cb) => {
+                    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+                        return cb(new Error('Only .jpg, .jpeg, and .png files are allowed!'), false);
+                    }
+                    cb(null, true);
+                },
+                limits: {
+                    fileSize: 1 * 1024 * 1024, // 1 MB
+                },
             }),
         }),
         TypeOrmModule.forFeature([User, Resident]),
