@@ -11,11 +11,15 @@ import { User } from '../users/entities/user.entity';
 export class DashboardsController {
     constructor(private readonly dashboardsService: DashboardsService) {}
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Manager)
     @Get('manager')
     public async getManagerDashboardData() {
         return this.dashboardsService.getManagerDashboardData();
     }
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Caretaker)
     @Get('caretaker')
     public async getCaretakerDashboardData() {
         return this.dashboardsService.getCaretakerDashboardData();
