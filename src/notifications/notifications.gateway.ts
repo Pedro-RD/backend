@@ -12,7 +12,11 @@ interface WebSocketEvents {
     loadNotifications: (payload: NotificationEvent[]) => void;
 }
 
-@WebSocketGateway()
+@WebSocketGateway({
+    cors: {
+        origin: '*',
+    },
+})
 export class NotificationsGateway implements OnModuleInit {
     constructor(private readonly notificationsService: NotificationsService) {}
 
