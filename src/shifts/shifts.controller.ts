@@ -23,7 +23,7 @@ export class ShiftsController {
     @Roles(Role.Manager, Role.Caretaker)
     @Get()
     findAll(@Param('employeeId', ParseIntPipe) employeeID: number, @Query() query: QueryParamsShiftDto, @UserReq() userReq) {
-        if (userReq.role !== Role.Manager && userReq.id !== employeeID) {
+        if (userReq.role !== Role.Manager && userReq.employee.id !== employeeID) {
             throw new ForbiddenException('Não tem permissão para aceder a este recurso');
         }
         return this.shiftsService.findAll(employeeID, query);
