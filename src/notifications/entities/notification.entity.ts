@@ -18,6 +18,7 @@ export enum NotificationType {
 export enum NotificationStatus {
     DONE = 'Concluído',
     CANCELED = 'Cancelado',
+    ONGOING = 'Em Curso',
     PENDING = 'Pendente',
 }
 

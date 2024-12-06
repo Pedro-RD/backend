@@ -6,9 +6,10 @@ import { NotificationEvent } from './entities/notification.entity';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationsController } from './notifications.controller';
+import { User } from '../users/entities/user.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([NotificationEvent]), UsersModule, AuthModule],
+    imports: [TypeOrmModule.forFeature([NotificationEvent, User]), UsersModule, AuthModule],
     providers: [NotificationsGateway, NotificationsService],
     controllers: [NotificationsController],
 })

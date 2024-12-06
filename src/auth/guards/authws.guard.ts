@@ -1,8 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
 import { UsersService } from '../../users/users.service';
 import { WsException } from '@nestjs/websockets';
+import { Socket } from 'socket.io';
+import { verify } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthGuardWS implements CanActivate {
@@ -13,8 +14,7 @@ export class AuthGuardWS implements CanActivate {
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToWs().getClient().handshake;
-        const token = this.extractTokenFromHeader(request);
+        const token = this.extractTokenFromHeader(context.switchToWs().getClient());
         if (!token) {
             this.logger.error('No token found');
             throw new WsException('Não autorizado');
@@ -24,17 +24,33 @@ export class AuthGuardWS implements CanActivate {
             const user = await this.userService.findOne(payload.sub);
             // 💡 We're assigning the payload to the request object here
             // so that we can access it in our route handlers
-            request.user = user;
-        } catch {
-            this.logger.error('Invalid token');
+            context.switchToWs().getClient().handshake.user = user;
+        } catch (error) {
+            this.logger.error(`Error: ${JSON.stringify(error)} Message: ${error.message}`);
             throw new WsException('Não autorizado');
         }
         return true;
     }
 
-    private extractTokenFromHeader(request: Request): string | undefined {
-        Logger.log(JSON.stringify(request.headers));
-        const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    private extractTokenFromHeader(client: Socket): string | undefined {
+        Logger.log(JSON.stringify(client.handshake.auth));
+        const [type, token] = client.handshake.auth?.authorization.split(' ') || [];
         return type === 'Bearer' ? token : undefined;
+    }
+
+    static validateToken(client: Socket) {
+        const authorization = client.handshake.auth?.authorization;
+
+        if (!authorization) {
+            Logger.error('No token found');
+            throw new WsException('Não autorizado');
+        }
+        const [type, token] = authorization.split(' ');
+        if (type !== 'Bearer') {
+            Logger.error('Invalid token type');
+            throw new WsException('Não autorizado');
+        }
+
+        return verify(token, process.env.JWT_SECRET);
     }
 }
