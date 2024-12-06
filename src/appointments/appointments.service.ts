@@ -150,6 +150,7 @@ export class AppointmentsService {
             where: {
                 start: Between(now, threeHoursLater),
             },
+            relations: ['resident'],
         });
 
         appointments.forEach((appointment) => {
@@ -171,6 +172,7 @@ export class AppointmentsService {
             where: {
                 start: Between(tomorrow, nextDay),
             },
+            relations: ['resident'],
         });
 
         appointments.forEach((appointment) => {
