@@ -2,16 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ShiftUpdatedEvent } from '../events/shift-updated.event';
 import { MedicamentAdministrationEvent } from '../medicament-administration/medicament-administration.service';
-import { MessagesEvent } from '../events/message.event';
 import { Medicament } from '../medicaments/entities/medicament.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationEvent, NotificationStatus, NotificationType } from './entities/notification.entity';
-import { In, Not, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { BehaviorSubject } from 'rxjs';
 import { Cron } from '@nestjs/schedule';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../enums/roles.enum';
+import { Message } from '../messages/entities/message.entity';
 
 @Injectable()
 export class NotificationsService {
@@ -54,9 +54,10 @@ export class NotificationsService {
         queryBuilder.leftJoinAndSelect('medicament.resident', 'medicamentResident');
         queryBuilder.leftJoinAndSelect('appointment.resident', 'appointmentResident');
 
-        queryBuilder.orderBy('notification.createdAt', 'DESC');
+        queryBuilder.orderBy('notification.createdAt', 'ASC');
 
         const notifications = await queryBuilder.getMany();
+        this.logger.log(`Notifications loaded: ${JSON.stringify(notifications)}`);
         this._internalNotifications.next(notifications);
     }
 
@@ -78,7 +79,20 @@ export class NotificationsService {
 
     async updateStatus(notificationId: number, status: NotificationStatus, userid: number) {
         this.logger.log(`Updating notification ${notificationId} status to ${status}`);
-        const notification = await this.notificationRepository.findOne({ where: { id: notificationId }, relations: ['medicament'] });
+        const notification = await this.notificationRepository.findOne({
+            where: { id: notificationId },
+            relations: [
+                'medicament',
+                'appointment',
+                'userMessage',
+                'user',
+                'userMessage.resident',
+                'medicament.resident',
+                'appointment.resident',
+                'userMessage.resident',
+                'userMessage.resident',
+            ],
+        });
         if (!notification) {
             return;
         }
@@ -86,11 +100,13 @@ export class NotificationsService {
         notification.status = status;
         if (status === NotificationStatus.ONGOING) {
             notification.user = await this.userRepository.findOne({ where: { id: userid } });
+        } else if (status === NotificationStatus.PENDING) {
+            notification.user = null;
         }
 
         const result = await this.notificationRepository.save(notification);
 
-        if (result.status === NotificationStatus.ONGOING) {
+        if (result.status === NotificationStatus.ONGOING || result.status === NotificationStatus.PENDING) {
             this._internalNotifications.next(this._internalNotifications.value.map((n) => (n.id === notificationId ? result : n)));
         }
 
@@ -191,7 +207,7 @@ export class NotificationsService {
         const now = new Date();
         this.logger.log(`Medicament administration due event received for medicament ${JSON.stringify(payload)}`);
         const notification = this.notificationRepository.create({
-            message: `Administração de medicamento de ${payload.administration.medicament.name} para ${payload.administration.medicament.resident.name}`,
+            message: `Medicação ${payload.administration.medicament.name}`,
             type: NotificationType.MEDICAMENT,
             status: NotificationStatus.PENDING,
             medicament: payload.administration.medicament,
@@ -204,10 +220,10 @@ export class NotificationsService {
     }
 
     @OnEvent('message.created', { async: true })
-    async handleMessageCreatedEvent(payload: MessagesEvent) {
+    async handleMessageCreatedEvent(payload: Message) {
         this.logger.log(`Message created event received for message ${JSON.stringify(payload)}`);
         if (payload.user.role !== Role.Manager && payload.user.role !== Role.Caretaker) {
-            const notificationExists = await this.notificationRepository.findOne({
+            const notificationExists = await this.notificationRepository.find({
                 where: {
                     userMessage: {
                         resident: {
@@ -220,18 +236,28 @@ export class NotificationsService {
                 },
             });
 
-            Logger.log(`Notification exists: ${notificationExists}`);
+            Logger.log(`Notification exists: ${JSON.stringify(notificationExists)}`);
 
-            if (!notificationExists) {
-                const notification = this.notificationRepository.create({
-                    message: `Nova mensagem sobre o residente ${payload.resident.name}`,
-                    type: NotificationType.MESSAGE,
-                    status: NotificationStatus.PENDING,
-                    userMessage: payload,
-                });
-                const result = await this.notificationRepository.save(notification);
-                this._internalNotifications.next([...this.internalNotifications, result]);
+            if (notificationExists.length) {
+                const ids = await Promise.all(
+                    notificationExists.map(async (ne) => {
+                        ne.status = NotificationStatus.CANCELED;
+                        await this.notificationRepository.save(ne);
+                        return ne.id;
+                    }),
+                );
+
+                this._internalNotifications.next(this.internalNotifications.filter((n) => !ids.includes(n.id)));
             }
+
+            const notification = this.notificationRepository.create({
+                message: `Nova mensagem sobre o residente ${payload.resident.name}`,
+                type: NotificationType.MESSAGE,
+                status: NotificationStatus.PENDING,
+                userMessage: payload,
+            });
+            const result = await this.notificationRepository.save(notification);
+            this._internalNotifications.next([...this.internalNotifications, result]);
         }
 
         payload.resident.relatives.forEach(async (relative) => {
@@ -314,7 +340,10 @@ export class NotificationsService {
     @Cron('0 0 * * *')
     async handleNotificationsCron() {
         const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
-        queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
+        queryBuilder.where('notification.status = :status', {
+            status: NotificationStatus.PENDING,
+            type: In([NotificationType.APPOINTMENT, NotificationType.MEDICAMENT]),
+        });
         queryBuilder.andWhere('notification.createdAt < :date', { date: new Date(Date.now() - 86400000) });
 
         const notifications = await queryBuilder.getMany();
