@@ -10,7 +10,6 @@ import { QueryParamsMessagesDto } from './dto/query-params-messages.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { Message } from './entities/message.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { MessagesEvent } from '../events/message.event';
 
 @Injectable()
 export class MessagesService {
@@ -52,10 +51,7 @@ export class MessagesService {
         const rxp = plainToClass(Message, result);
 
         // load resident
-        this.eventEmitter.emit(
-            'message.created',
-            new MessagesEvent(rxp.content, result.resident, { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role }),
-        );
+        this.eventEmitter.emit('message.created', result);
         return { ...rxp, user: { id: rxp.user.id, email: rxp.user.email, name: rxp.user.name, role: rxp.user.role } };
     }
 
