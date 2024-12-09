@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
-import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, In, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { Employee } from '../employee/entities/employee.entity';
 import { Resident } from '../residents/entities/resident.entity';
 import { HealthReport } from '../health-report/entities/health-report.entity';
@@ -98,6 +98,8 @@ export class DashboardsService {
             employees: employees.length,
             residents: residents.length,
             users: users.length,
+            occupiedBeds: residents.filter((resident) => resident.bedNumber).length,
+            totalBeds: parseInt(process.env.NUMBER_OF_BEDS) || 0 - residents.filter((resident) => !resident.bedNumber).length,
             payments: [
                 {
                     date: new Date(now.getFullYear(), now.getMonth(), 1),
