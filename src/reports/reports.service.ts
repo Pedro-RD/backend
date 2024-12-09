@@ -31,8 +31,8 @@ export class ReportsService {
 
             // Add headers for payments
             receivedSheet.columns = [
-                { header: 'ID Recidente', key: 'residentId', width: 15 },
-                { header: 'Nome Recidente', key: 'residentName', width: 15 },
+                { header: 'ID Residente', key: 'residentId', width: 15 },
+                { header: 'Nome Residente', key: 'residentName', width: 15 },
                 { header: 'Cama', key: 'bed', width: 10 },
                 { header: 'ID', key: 'id', width: 10 },
                 { header: 'Valor', key: 'amount', width: 15 },
