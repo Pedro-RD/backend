@@ -12,6 +12,7 @@ import { Cron } from '@nestjs/schedule';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../enums/roles.enum';
 import { Message } from '../messages/entities/message.entity';
+import { MedicamentAdministration } from '../medicament-administration/entities/medicament-administration.entity';
 
 @Injectable()
 export class NotificationsService {
@@ -27,6 +28,8 @@ export class NotificationsService {
         private readonly eventEmitter: EventEmitter2,
         @InjectRepository(NotificationEvent) private readonly notificationRepository: Repository<NotificationEvent>,
         @InjectRepository(User) private readonly userRepository: Repository<User>,
+        @InjectRepository(MedicamentAdministration) private readonly medicamentAdministrationRepository: Repository<MedicamentAdministration>,
+        @InjectRepository(Medicament) private readonly medicamentRepository: Repository<Medicament>,
     ) {}
 
     // Load notifications
@@ -39,8 +42,10 @@ export class NotificationsService {
             NotificationType.MESSAGE,
         ];
 
+        const status = [NotificationStatus.PENDING, NotificationStatus.ONGOING];
+
         const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
-        queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
+        queryBuilder.where('notification.status IN (:...status)', { status });
 
         // Created in the last day
         queryBuilder.andWhere('notification.createdAt >= :date', { date: new Date(Date.now() - 86400000) });
@@ -86,16 +91,20 @@ export class NotificationsService {
                 'appointment',
                 'userMessage',
                 'user',
+                'medicamentAdministration',
                 'userMessage.resident',
                 'medicament.resident',
                 'appointment.resident',
                 'userMessage.resident',
                 'userMessage.resident',
+                'medicamentAdministration.medicament',
+                'medicamentAdministration.medicament.resident',
             ],
         });
         if (!notification) {
             return;
         }
+        this.logger.log(`Notification found: ${JSON.stringify(notification)}`);
 
         notification.status = status;
         if (status === NotificationStatus.ONGOING) {
@@ -115,13 +124,29 @@ export class NotificationsService {
         }
 
         if (notification.type === NotificationType.MEDICAMENT) {
-            this.eventEmitter.emit('medicament.administration.done', { administration: notification.medicament });
+            this.logger.warn('Medicament notification status updated, checking stock');
+            if (status === NotificationStatus.DONE) {
+                const medicament = notification.medicamentAdministration.medicament;
+                if (medicament.quantity > 0) {
+                    this.logger.warn('Medicament above 0, updating stock');
+                    medicament.quantity -= notification.medicamentAdministration.dose;
+                    await this.medicamentRepository.save(medicament);
+                }
+
+                if (medicament.quantity <= 0) {
+                    this.logger.error('Medicament out of stock');
+                    this.eventEmitter.emit('medicament.out-of-stock', medicament);
+                } else if (medicament.quantity <= 5) {
+                    this.logger.error('Medicament running low');
+                    this.eventEmitter.emit('medicament.running-low', medicament);
+                }
+            }
         }
 
         this.logger.log(`Notification ${notificationId} status updated to ${status}`);
     }
 
-    async getShifts(user) {
+    async getShifts(user: User) {
         const queryBuilder = this.notificationRepository.createQueryBuilder('notification');
         queryBuilder.leftJoinAndSelect('notification.user', 'user');
         queryBuilder.where('notification.status = :status', { status: NotificationStatus.PENDING });
@@ -210,7 +235,7 @@ export class NotificationsService {
             message: `Medicação ${payload.administration.medicament.name}`,
             type: NotificationType.MEDICAMENT,
             status: NotificationStatus.PENDING,
-            medicament: payload.administration.medicament,
+            medicamentAdministration: payload.administration,
             date: new Date(now.getFullYear(), now.getMonth(), now.getDate(), payload.administration.hour, payload.administration.minute),
         });
 
@@ -222,7 +247,7 @@ export class NotificationsService {
     @OnEvent('message.created', { async: true })
     async handleMessageCreatedEvent(payload: Message) {
         this.logger.log(`Message created event received for message ${JSON.stringify(payload)}`);
-        if (payload.user.role !== Role.Manager && payload.user.role !== Role.Caretaker) {
+        if (payload.user.role === Role.Relative) {
             const notificationExists = await this.notificationRepository.find({
                 where: {
                     userMessage: {
@@ -261,6 +286,33 @@ export class NotificationsService {
         }
 
         payload.resident.relatives.forEach(async (relative) => {
+            if (relative.id === payload.user.id) {
+                return;
+            }
+
+            const notificationExists = await this.notificationRepository.find({
+                where: {
+                    userMessage: {
+                        resident: {
+                            id: payload.resident.id,
+                        },
+                    },
+                    type: NotificationType.MESSAGE_RELATIVE,
+                    status: In([NotificationStatus.PENDING, NotificationStatus.ONGOING]),
+                    user: relative,
+                },
+                relations: ['user', 'userMessage', 'userMessage.resident'],
+            });
+
+            if (notificationExists.length) {
+                await Promise.all(
+                    notificationExists.map(async (ne) => {
+                        ne.status = NotificationStatus.CANCELED;
+                        await this.notificationRepository.save(ne);
+                    }),
+                );
+            }
+
             const notification = this.notificationRepository.create({
                 message: `Nova mensagem sobre o residente ${payload.resident.name}`,
                 type: NotificationType.MESSAGE_RELATIVE,
@@ -279,7 +331,7 @@ export class NotificationsService {
     async handleMedicamentOutOfStockEvent(payload: Medicament) {
         this.logger.log(`Medicament out of stock event received for medicament ${JSON.stringify(payload)}`);
 
-        const notificationExists = await this.notificationRepository.findOne({
+        const notificationExists = await this.notificationRepository.find({
             where: {
                 medicament: {
                     id: payload.id,
@@ -290,8 +342,16 @@ export class NotificationsService {
             relations: ['medicament'],
         });
 
-        if (notificationExists) {
-            return;
+        if (notificationExists.length > 0) {
+            this.logger.warn(`Found more than one notification for medicament out of stock ${payload.id}`);
+            const ids = await Promise.all(
+                notificationExists.map(async (notification) => {
+                    notification.status = NotificationStatus.CANCELED;
+                    await this.notificationRepository.save(notification);
+                    return notification.id;
+                }),
+            );
+            this._internalNotifications.next(this.internalNotifications.filter((n) => !ids.includes(n.id)));
         }
 
         const notification = this.notificationRepository.create({
@@ -310,7 +370,7 @@ export class NotificationsService {
     async handleMedicamentRunningLowEvent(payload: Medicament) {
         this.logger.log(`Medicament running low event received for medicament ${JSON.stringify(payload)}`);
 
-        const notificationExists = await this.notificationRepository.findOne({
+        const notificationExists = await this.notificationRepository.find({
             where: {
                 medicament: {
                     id: payload.id,
@@ -321,8 +381,16 @@ export class NotificationsService {
             relations: ['medicament'],
         });
 
-        if (notificationExists) {
-            return;
+        if (notificationExists.length > 0) {
+            this.logger.warn(`Found more than one notification for medicament running low ${payload.id}`);
+            const ids = await Promise.all(
+                notificationExists.map(async (notification) => {
+                    notification.status = NotificationStatus.CANCELED;
+                    await this.notificationRepository.save(notification);
+                    return notification.id;
+                }),
+            );
+            this._internalNotifications.next(this.internalNotifications.filter((n) => !ids.includes(n.id)));
         }
 
         const notification = this.notificationRepository.create({
@@ -353,7 +421,6 @@ export class NotificationsService {
         });
 
         this.loadNotifications();
-
         this.logger.log('Notifications checked');
     }
 }
