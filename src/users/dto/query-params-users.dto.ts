@@ -5,12 +5,14 @@ import { QueryParamsDto } from '../../query/query-params.dto';
 
 export class QueryParamsUsersDto extends QueryParamsDto {
     @IsOptional()
-    @IsString()
-    @Matches(/^(id|email|name|phoneNumber|address|postcode|city|fiscalId|nationality)$/)
+    @IsString({ message: 'O campo de ordenação deve ser uma string' })
+    @Matches(/^(id|email|name|phoneNumber|address|postcode|city|fiscalId|role|nationality)$/, {
+        message: 'Campo de ordenação inválido. Deve ser um dos seguintes: id, email, name, phoneNumber, address, postcode, city, fiscalId, role, nationality',
+    })
     orderBy?: string;
 
     @IsOptional()
-    @IsString()
-    @IsEnum(Role)
+    @IsString({ message: 'O cargo deve ser uma string' })
+    @IsEnum(Role, { message: 'Cargo inválido' })
     role?: Role;
 }
