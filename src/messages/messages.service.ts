@@ -171,7 +171,7 @@ export class MessagesService {
             throw new ForbiddenException('O utilizador não tem permissão para eliminar esta mensagem');
         }
 
-        await this.messageRepository.delete(id);
+        await this.messageRepository.softDelete(id);
 
         this.logger.log(`Message ${id} deleted for resident ${residentId} by user ${user.id}`);
     }

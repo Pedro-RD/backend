@@ -4,6 +4,7 @@ import { User } from '../../users/entities/user.entity';
 import { Medicament } from '../../medicaments/entities/medicament.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { Message } from '../../messages/entities/message.entity';
+import { MedicamentAdministration } from '../../medicament-administration/entities/medicament-administration.entity';
 
 export enum NotificationType {
     APPOINTMENT = 'Consulta',
@@ -50,6 +51,9 @@ export class NotificationEvent {
 
     @ManyToOne(() => Message, { nullable: true })
     userMessage?: Message | null;
+
+    @ManyToOne(() => MedicamentAdministration, { nullable: true })
+    medicamentAdministration?: MedicamentAdministration | null;
 
     // Timestamps
     @CreateDateColumn()
