@@ -8,7 +8,7 @@ export class Employee {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column('decimal', { precision: 10, scale: 2 })
     salary: number;
 
     @Column()
