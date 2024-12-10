@@ -35,7 +35,7 @@ export class UsersService {
         await this.checkIfEmailExists(createUserDto.email);
 
         // Hash password
-        if (!createUserDto.password) throw new BadRequestException('Password is required');
+        if (!createUserDto.password) throw new BadRequestException('Password é obrigatória');
         createUserDto.password = await bcrypt.hash(createUserDto.password, this.saltRounds);
 
         // Find associated residents
@@ -48,7 +48,7 @@ export class UsersService {
         //Check if all residents exist
         if (createUserDto.residents && residents.length !== createUserDto.residents.length) {
             this.logger.error('One or more residents do not exist', JSON.stringify(createUserDto.residents), JSON.stringify(residents));
-            throw new BadRequestException('One or more residents do not exist');
+            throw new BadRequestException('Um ou mais residentes não existem');
         }
 
         const user = this.usersRepository.create({
@@ -103,7 +103,7 @@ export class UsersService {
             };
         } catch (error) {
             this.logger.error('Error finding users', error);
-            throw new BadRequestException('Query parameters are not valid');
+            throw new BadRequestException('Parametros de pesquisa inválidos');
         }
     }
 
@@ -139,7 +139,7 @@ export class UsersService {
                 JSON.stringify(updateUserDto.residents),
                 JSON.stringify(residents),
             );
-            throw new BadRequestException('One or more residents do not exist or the user is not a relative');
+            throw new BadRequestException('Um ou mais residentes não existem ou o utilizador não é um familiar');
         }
 
         // Update user
@@ -168,12 +168,12 @@ export class UsersService {
         // Find user by email
         const user = await this.usersRepository.findOne({ where: { email }, relations: ['residents', 'employee'] });
         this.logger.log('User with email:', JSON.stringify(user));
-        if (!user) throw new UnauthorizedException('Invalid credentials');
+        if (!user) throw new UnauthorizedException('Password ou email inválido');
 
         // Compare password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         this.logger.log('Password is valid:', isPasswordValid);
-        if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
+        if (!isPasswordValid) throw new UnauthorizedException('Password ou email inválido');
 
         // Return user
         return plainToClass(User, user);
@@ -199,7 +199,7 @@ export class UsersService {
         // Check if user exists if not throw BadRequestException  400
         if (!user) {
             this.logger.error('User not found', id);
-            throw new NotFoundException('User not found');
+            throw new NotFoundException('Utilizador não encontrado');
         }
         // Return user
         return user;

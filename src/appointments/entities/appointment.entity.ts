@@ -52,7 +52,7 @@ export class Appointment {
     })
     observation: string;
 
-    @ManyToOne(() => Resident, { nullable: false })
+    @ManyToOne(() => Resident, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'residentId' })
     resident: Resident;
 

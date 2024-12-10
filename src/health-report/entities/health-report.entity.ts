@@ -41,7 +41,7 @@ export class HealthReport {
     bloodOxygenLevel: number; // Taxa de Oxigênio no Sangue
 
     @Exclude()
-    @ManyToOne(() => Resident, (resident) => resident.healthReports)
+    @ManyToOne(() => Resident, (resident) => resident.healthReports, { onDelete: 'CASCADE' })
     @JoinColumn()
     resident: Resident;
 

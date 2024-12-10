@@ -41,7 +41,7 @@ export class MedicamentAdministrationService {
             };
         } catch (e) {
             this.logger.error(`An error occurred while creating the medicament administration: ${e?.message}`);
-            throw new BadRequestException('An error occurred while creating the medicament administration.');
+            throw new BadRequestException('Um erro ocorreu ao criar a administração do medicamento');
         }
     }
 

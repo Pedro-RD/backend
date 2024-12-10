@@ -12,11 +12,11 @@ export class Message {
     @Column()
     content: string;
 
-    @ManyToOne(() => User, (user) => user.messages)
+    @ManyToOne(() => User, (user) => user.messages, { onDelete: 'CASCADE' })
     user: User;
 
     @Exclude()
-    @ManyToOne(() => Resident, (resident) => resident.messages)
+    @ManyToOne(() => Resident, (resident) => resident.messages, { onDelete: 'CASCADE' })
     resident: Resident;
 
     // Timestamps

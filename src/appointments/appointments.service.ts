@@ -42,7 +42,7 @@ export class AppointmentsService {
 
         if (conflictingAppointment) {
             this.logger.error(`An appointment already exists within one hour of ${startDate.toISOString()}`);
-            throw new BadRequestException(`An appointment already exists within one hour of ${startDate.toISOString()}`);
+            throw new BadRequestException(`Já existe um agendamento dentro de uma hora de ${startDate.toISOString()}`);
         }
     }
 
@@ -100,7 +100,7 @@ export class AppointmentsService {
             };
         } catch (error) {
             this.logger.error(error.message, error.stack);
-            throw new BadRequestException('Error while fetching appointments');
+            throw new BadRequestException('Erro ao procurar agendamentos');
         }
     }
 
