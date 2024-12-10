@@ -210,7 +210,7 @@ export class UsersService {
         const user = await this.usersRepository.findOne({ where: { email } });
         if (user) {
             this.logger.error(`Email ${email} already in use`);
-            throw new BadRequestException('Email already in use');
+            throw new BadRequestException('O email já está a ser utilizado');
         }
     }
 
