@@ -1,12 +1,12 @@
 import { IsNotEmpty, IsNumber, IsString, Matches } from 'class-validator';
 
 export class CreateMedicamentAdministrationDto {
-    @IsString()
-    @IsNotEmpty()
-    @Matches(/^(0|1[0-9]|2[0-3]|([01]?[0-9]))[:][0-5][0-9]$/)
+    @IsString({ message: 'A hora deve ser uma string.' })
+    @IsNotEmpty({ message: 'A hora é obrigatória.' })
+    @Matches(/^(0|1[0-9]|2[0-3]|([01]?[0-9]))[:][0-5][0-9]$/, { message: 'A hora deve estar no formato HH:MM.' })
     hour: string;
 
-    @IsNumber()
+    @IsNumber({}, { message: 'A dose deve ser um número.' })
     dose: number;
 }
 

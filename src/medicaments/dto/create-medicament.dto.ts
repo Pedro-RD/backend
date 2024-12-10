@@ -2,24 +2,24 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateMedicamentDto {
-    @IsString()
-    @IsNotEmpty()
+    @IsString({ message: 'O nome deve ser uma string.' })
+    @IsNotEmpty({ message: 'O nome é obrigatório.' })
     name: string;
 
-    @IsString()
+    @IsString({ message: 'As instruções devem ser uma string.' })
     @IsOptional()
     instructions: string;
 
-    @IsNumber()
-    @Min(0)
+    @IsNumber({}, { message: 'A quantidade deve ser um número.' })
+    @Min(0, { message: 'A quantidade não pode ser negativa.' })
     quantity: number;
 
-    @IsNumber()
+    @IsNumber({}, { message: 'A quantidade de prescrição deve ser um número.' })
     @IsOptional()
-    @Min(0)
+    @Min(0, { message: 'A quantidade de prescrição não pode ser negativa.' })
     prescriptionQuantity: number;
 
     @Transform(({ value }) => new Date(value))
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'A data de validade é obrigatória.' })
     dueDate: Date;
 }

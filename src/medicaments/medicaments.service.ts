@@ -116,7 +116,14 @@ export class MedicamentsService {
             throw new NotFoundException('Medicament not found');
         }
 
-        await this.medicamentsRepository.delete(id);
+        await this.medicamentsRepository.softDelete(id);
+
+        await Promise.all(
+            medicament.medicamentAdministrations.map((medicamentAdministration) =>
+                this.eventEmitter.emit('medicament.administration.deleted', medicamentAdministration),
+            ),
+        );
+
         this.logger.log('Removed medicament', id, 'for resident', residentId);
     }
 

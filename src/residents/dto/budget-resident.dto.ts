@@ -3,6 +3,8 @@ import Mobility from '../enums/mobility.enum';
 
 export class BudgetResidentDto {
     @IsOptional()
-    @IsEnum(Mobility)
+    @IsEnum(Mobility, {
+        message: 'O tipo de mobilidade fornecido não é válido',
+    })
     mobility?: Mobility;
 }

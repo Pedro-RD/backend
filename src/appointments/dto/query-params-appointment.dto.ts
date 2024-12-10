@@ -5,15 +5,15 @@ import { AppointmentStatus, AppointmentType } from '../entities/appointment.enti
 
 export class QueryParamsAppointmentDto extends QueryParamsDto {
     @IsOptional()
-    @IsString()
-    @Matches(/^(id|start|title|status|type)$/)
+    @IsString({ message: 'orderBy deve ser uma string' })
+    @Matches(/^(id|start|title|status|type)$/, { message: 'orderBy deve ser um dos seguintes valores: id, start, title, status, type' })
     orderBy?: string;
 
     @IsOptional()
-    @IsEnum(AppointmentStatus)
+    @IsEnum(AppointmentStatus, { message: 'status deve ser um valor válido de AppointmentStatus' })
     status?: AppointmentStatus;
 
     @IsOptional()
-    @IsEnum(AppointmentType)
+    @IsEnum(AppointmentType, { message: 'type deve ser um valor válido de AppointmentType' })
     type?: AppointmentType;
 }
