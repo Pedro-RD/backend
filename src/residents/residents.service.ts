@@ -196,8 +196,12 @@ export class ResidentsService {
 
     async remove(id: number): Promise<void> {
         this.logger.log('Removing resident', JSON.stringify({ id }));
-        await this.getResidentOrFail(id);
+        const resident = await this.getResidentOrFail(id);
         this.logger.log('Resident removed', JSON.stringify({ id }));
+
+        resident.bedNumber = null;
+        resident.relatives = [];
+        await this.residentsRepository.save(resident);
         await this.residentsRepository.softDelete(id);
     }
 

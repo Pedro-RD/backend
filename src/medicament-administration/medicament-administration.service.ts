@@ -154,12 +154,16 @@ export class MedicamentAdministrationService {
 
         const medicamentAdministrations = await this.medicamentAdministrationRepository
             .createQueryBuilder('medicamentAdministration')
-            .leftJoinAndSelect('medicamentAdministration.medicament', 'medicament')
-            .leftJoinAndSelect('medicament.resident', 'resident')
+            .innerJoinAndSelect('medicamentAdministration.medicament', 'medicament')
+            .innerJoinAndSelect('medicament.resident', 'resident')
             .where('medicamentAdministration.hour = :startHour', { startHour })
             .andWhere('medicamentAdministration.minute >= :startMinute', { startMinute })
             .andWhere('medicamentAdministration.minute <= :endMinute', { endMinute })
+            .andWhere('medicament.deletedAt IS NULL')
+            .andWhere('resident.deletedAt IS NULL')
             .getMany();
+
+        this.logger.log(`Found ${medicamentAdministrations.length} medicament administrations due`);
 
         medicamentAdministrations.forEach((medicamentAdministration) => {
             this.eventEmitter.emit('medicament.administration.due', new MedicamentAdministrationEvent(medicamentAdministration));
