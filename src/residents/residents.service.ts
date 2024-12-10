@@ -196,8 +196,12 @@ export class ResidentsService {
 
     async remove(id: number): Promise<void> {
         this.logger.log('Removing resident', JSON.stringify({ id }));
-        await this.getResidentOrFail(id);
+        const resident = await this.getResidentOrFail(id);
         this.logger.log('Resident removed', JSON.stringify({ id }));
+
+        resident.bedNumber = null;
+        resident.relatives = [];
+        await this.residentsRepository.save(resident);
         await this.residentsRepository.softDelete(id);
     }
 
@@ -246,13 +250,13 @@ export class ResidentsService {
     async checkIfBedIsAvailable(bedNumber: number) {
         if (bedNumber > this.numberOfBeds) {
             this.logger.error('Bed number is higher than the number of beds', JSON.stringify(bedNumber), this.numberOfBeds);
-            throw new BadRequestException('Bed number is higher than the number of beds');
+            throw new BadRequestException('O numero da cama é superior ao número de camas');
         }
 
         const resident = await this.residentsRepository.findOne({ where: { bedNumber } });
         if (resident) {
             this.logger.error('Bed is already occupied', JSON.stringify({ bedNumber }));
-            throw new BadRequestException('Bed is already occupied');
+            throw new BadRequestException('A cama já está ocupada');
         }
     }
 

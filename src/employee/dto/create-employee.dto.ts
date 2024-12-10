@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
     IsDate,
@@ -22,28 +23,29 @@ class IsContractEndAfterStartConstraint implements ValidatorConstraintInterface 
     }
 
     defaultMessage(args: ValidationArguments): string {
-        return 'contractEnds must be after contractStart';
+        Logger.error(args);
+        return 'A data de fim do contrato deve ser posterior à data de início';
     }
 }
 
 export class CreateEmployeeDto {
-    @IsNotEmpty()
-    @IsPositive()
-    @Min(820)
+    @IsNotEmpty({ message: 'O salário é obrigatório' })
+    @IsPositive({ message: 'O salário deve ser um valor positivo' })
+    @Min(820, { message: 'O salário mínimo é 820' })
     salary: number;
 
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'A data de início do contrato é obrigatória' })
     @Type(() => Date)
-    @IsDate()
+    @IsDate({ message: 'A data de início do contrato deve ser uma data válida' })
     contractStart: Date;
 
     @IsOptional()
     @Type(() => Date)
-    @IsDate()
-    @Validate(IsContractEndAfterStartConstraint)
+    @IsDate({ message: 'A data de fim do contrato deve ser uma data válida' })
+    @Validate(IsContractEndAfterStartConstraint, { message: 'A data de fim do contrato deve ser posterior à data de início' })
     contractEnds: Date;
 
-    @IsNotEmpty()
-    @IsInt()
+    @IsNotEmpty({ message: 'O ID do usuário é obrigatório' })
+    @IsInt({ message: 'O ID do usuário deve ser um número inteiro' })
     userId: number;
 }

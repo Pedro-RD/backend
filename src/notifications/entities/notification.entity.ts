@@ -40,19 +40,19 @@ export class NotificationEvent {
     @Column({ nullable: true })
     date: Date | null;
 
-    @ManyToOne(() => User, { nullable: true })
+    @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
     user?: User | null;
 
-    @ManyToOne(() => Medicament, { nullable: true })
+    @ManyToOne(() => Medicament, { nullable: true, onDelete: 'CASCADE' })
     medicament?: Medicament | null;
 
-    @ManyToOne(() => Appointment, { nullable: true })
+    @ManyToOne(() => Appointment, { nullable: true, onDelete: 'CASCADE' })
     appointment?: Appointment | null;
 
-    @ManyToOne(() => Message, { nullable: true })
+    @ManyToOne(() => Message, { nullable: true, onDelete: 'CASCADE' })
     userMessage?: Message | null;
 
-    @ManyToOne(() => MedicamentAdministration, { nullable: true })
+    @ManyToOne(() => MedicamentAdministration, { nullable: true, onDelete: 'CASCADE' })
     medicamentAdministration?: MedicamentAdministration | null;
 
     // Timestamps

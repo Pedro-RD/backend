@@ -116,7 +116,14 @@ export class MedicamentsService {
             throw new NotFoundException('Medicament not found');
         }
 
-        await this.medicamentsRepository.delete(id);
+        await this.medicamentsRepository.softDelete(id);
+
+        await Promise.all(
+            medicament.medicamentAdministrations.map((medicamentAdministration) =>
+                this.eventEmitter.emit('medicament.administration.deleted', medicamentAdministration),
+            ),
+        );
+
         this.logger.log('Removed medicament', id, 'for resident', residentId);
     }
 
@@ -156,7 +163,7 @@ export class MedicamentsService {
 
         if (medicament) {
             this.logger.error('Medicament with name', name, 'already exists for resident', residentId);
-            throw new BadRequestException('Medicament with this name already exists for this resident');
+            throw new BadRequestException('Um medicamento com este nome já existe para este residente');
         }
         this.logger.log('Medicament with name', name, 'does not exist for resident', residentId);
     }

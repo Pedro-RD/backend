@@ -57,6 +57,7 @@ export class UsersController {
         }
         return this.usersService.addProfilePicture(id, file);
     }
+
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Manager, Role.Relative, Role.Caretaker)
     @Delete(':id/upload')
@@ -82,6 +83,7 @@ export class UsersController {
     // @Roles(Role.Manager)
     @Post()
     create(@Body() createUserDto: CreateUserDto) {
+        createUserDto.email = createUserDto.email.toLowerCase();
         return this.usersService.create(createUserDto);
     }
 
@@ -92,6 +94,7 @@ export class UsersController {
         if (userReq.role !== Role.Manager && userReq.id !== id) {
             throw new ForbiddenException('Não tem permissão para aceder a este recurso');
         }
+        if (updateUserDto.email) updateUserDto.email = updateUserDto.email.toLowerCase();
         return this.usersService.update(id, updateUserDto);
     }
 

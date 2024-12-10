@@ -13,12 +13,12 @@ export class QueryParamsPaymentsDto extends QueryParamsDto {
 
     @IsOptional()
     @Type(() => Date)
-    @IsDate()
+    @IsDate({ message: 'from deve ser uma data válida' })
     from?: Date;
 
     @IsOptional()
     @Type(() => Date)
-    @IsDate()
+    @IsDate({ message: 'to deve ser uma data válida' })
     to?: Date;
 
     @IsOptional()

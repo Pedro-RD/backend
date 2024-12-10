@@ -15,7 +15,7 @@ export class Shift {
     shift: ShiftType;
 
     @Exclude()
-    @ManyToOne(() => Employee, (employee) => employee.shifts)
+    @ManyToOne(() => Employee, (employee) => employee.shifts, { onDelete: 'CASCADE' })
     employee: Employee;
 
     // Timestamps

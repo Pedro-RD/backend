@@ -16,7 +16,7 @@ export class MedicamentAdministration {
     @Column()
     dose: number;
 
-    @ManyToOne(() => Medicament, (medicament) => medicament.medicamentAdministrations)
+    @ManyToOne(() => Medicament, (medicament) => medicament.medicamentAdministrations, { onDelete: 'CASCADE' })
     @JoinColumn()
     medicament: Medicament;
 

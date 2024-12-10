@@ -42,7 +42,7 @@ export class AppointmentsService {
 
         if (conflictingAppointment) {
             this.logger.error(`An appointment already exists within one hour of ${startDate.toISOString()}`);
-            throw new BadRequestException(`An appointment already exists within one hour of ${startDate.toISOString()}`);
+            throw new BadRequestException(`Já existe um agendamento dentro de uma hora de ${startDate.toISOString()}`);
         }
     }
 
@@ -100,7 +100,7 @@ export class AppointmentsService {
             };
         } catch (error) {
             this.logger.error(error.message, error.stack);
-            throw new BadRequestException('Error while fetching appointments');
+            throw new BadRequestException('Erro ao procurar agendamentos');
         }
     }
 
@@ -149,6 +149,8 @@ export class AppointmentsService {
         const appointments = await this.appointmentsRepository.find({
             where: {
                 start: Between(now, threeHoursLater),
+                status: AppointmentStatus.Pending,
+                resident: { deletedAt: null },
             },
             relations: ['resident'],
         });
@@ -159,7 +161,7 @@ export class AppointmentsService {
         this.logger.log('Next 3 hours appointments handled');
     }
 
-    @Cron('0 0 12 * * *')
+    @Cron('0 0 17 * * *')
     async handleNextDay() {
         const now = new Date();
         const tomorrow = new Date(now);
@@ -171,6 +173,8 @@ export class AppointmentsService {
         const appointments = await this.appointmentsRepository.find({
             where: {
                 start: Between(tomorrow, nextDay),
+                status: AppointmentStatus.Pending,
+                resident: { deletedAt: null },
             },
             relations: ['resident'],
         });
@@ -194,7 +198,10 @@ export class AppointmentsService {
         const appointments = await this.appointmentsRepository.find({
             where: {
                 start: Between(yesterday, pastDay),
+                status: AppointmentStatus.Pending,
+                resident: { deletedAt: null },
             },
+            relations: ['resident'],
         });
 
         // set all appointments to done

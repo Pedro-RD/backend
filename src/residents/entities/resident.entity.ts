@@ -64,7 +64,7 @@ export class Resident {
     @Column({ nullable: true, default: null })
     profilePicture: string;
 
-    @ManyToMany(() => User, (relative) => relative.residents)
+    @ManyToMany(() => User, (relative) => relative.residents, { onDelete: 'CASCADE' })
     @JoinTable({ name: 'resident_user' })
     relatives: User[];
 

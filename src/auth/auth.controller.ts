@@ -16,6 +16,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Post('login')
     signIn(@Body() signInDto: LoginDto) {
+        if (signInDto.email) signInDto.email = signInDto.email.toLowerCase();
         return this.authService.signIn(signInDto.email, signInDto.password);
     }
 

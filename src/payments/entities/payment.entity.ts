@@ -27,7 +27,7 @@ export class Payment {
     observation: string;
 
     @Exclude()
-    @ManyToOne(() => Resident, (resident) => resident.payments)
+    @ManyToOne(() => Resident, (resident) => resident.payments, { onDelete: 'CASCADE' })
     resident: Resident;
 
     // Timestamps
