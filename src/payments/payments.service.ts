@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
@@ -31,7 +31,7 @@ export class PaymentsService {
         // check if resident exists
         if (!createPaymentDto.month || !createPaymentDto.year) {
             this.logger.error('Month and year are required for monthly fee');
-            throw new NotFoundException('Mês e ano são obrigatórios para guardar a mensalidade');
+            throw new BadRequestException('Mês e ano são obrigatórios para guardar a mensalidade');
         }
 
         const resident = await this.residentsRepository.findOne({
@@ -56,7 +56,7 @@ export class PaymentsService {
 
         if (payment) {
             this.logger.error(`Payment for month ${createPaymentDto.month} and year ${createPaymentDto.year} already exists`);
-            throw new NotFoundException(`Já existe uma mensalidade para o mês ${createPaymentDto.month} e ano ${createPaymentDto.year}`);
+            throw new BadRequestException(`Já existe uma mensalidade para o mês ${createPaymentDto.month} e ano ${createPaymentDto.year}`);
         }
 
         // create payment
@@ -76,7 +76,7 @@ export class PaymentsService {
 
         if (!amount || amount <= 0) {
             this.logger.error('Amount is required for other payment');
-            throw new NotFoundException('O valor é obrigatório para guardar o pagamento');
+            throw new BadRequestException('O valor é obrigatório para guardar o pagamento');
         }
 
         // check if resident exists
